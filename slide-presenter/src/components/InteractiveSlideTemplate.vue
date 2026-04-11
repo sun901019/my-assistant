@@ -93,7 +93,7 @@ function handleNext() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-900 text-white flex flex-col">
+  <div class="h-full bg-slate-900 text-white flex flex-col overflow-hidden">
     <!-- Header -->
     <header
       class="bg-gradient-to-r px-4 py-3 md:px-6 md:py-4 flex items-center justify-between"
