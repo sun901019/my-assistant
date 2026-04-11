@@ -24,4 +24,16 @@ export const courses: readonly CourseInfo[] = [
     type: 'html',
     htmlPath: '/my-assistant/slides/git-github.html',
   },
+  {
+    id: 'fetch-api-basics',
+    title: '電商 API 串接觀念整理',
+    subtitle: '從餐廳比喻到 fetch 完整流程，第六週作業全解析',
+    icon: '🛒',
+    slideId: 'fetch-api-basics',
+    themeColor: 'sky',
+    tags: ['JavaScript', 'fetch', 'API', 'async/await', 'HTTP'],
+    createdAt: '2026-04-11',
+    type: 'html',
+    htmlPath: '/my-assistant/slides/fetch-api-basics.html',
+  },
 ]
