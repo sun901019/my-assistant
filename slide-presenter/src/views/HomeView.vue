@@ -6,7 +6,11 @@ import SlideModal from '../components/SlideModal.vue'
 const activeSlideId = ref<string | null>(null)
 const activeSlideTitle = ref('')
 
-function openSlide(courseId: string, title: string) {
+function openSlide(courseId: string, title: string, type?: string, htmlPath?: string) {
+  if (type === 'html' && htmlPath) {
+    window.open(htmlPath, '_blank')
+    return
+  }
   activeSlideId.value = courseId
   activeSlideTitle.value = title
 }
@@ -35,7 +39,7 @@ function closeSlide() {
           v-for="course in courses"
           :key="course.id"
           class="text-left p-6 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all group"
-          @click="openSlide(course.slideId, course.title)"
+          @click="openSlide(course.slideId, course.title, course.type, course.htmlPath)"
         >
           <div class="flex items-start gap-4">
             <span class="text-3xl">{{ course.icon }}</span>

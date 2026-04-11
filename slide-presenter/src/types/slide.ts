@@ -28,6 +28,8 @@ export interface CourseInfo {
   readonly themeColor: ThemeColor
   readonly tags: readonly string[]
   readonly createdAt: string
+  readonly type?: 'vue' | 'html'
+  readonly htmlPath?: string
 }
 
 export type ThemeColor = 'amber' | 'sky' | 'emerald' | 'purple'

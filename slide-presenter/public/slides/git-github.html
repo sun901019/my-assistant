@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git & GitHub 學習簡報</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--bg4:#2d333b;
+  --border:#30363d;--border2:#3d444d;
+  --text:#e6edf3;--text2:#c9d1d9;--text3:#8b949e;--text4:#6e7681;
+  --blue:#58a6ff;--blue-bg:#0d1926;--blue-border:#388bfd;
+  --green:#3fb950;--green-bg:#0d2818;--green-border:#238636;
+  --red:#f85149;--red-bg:#2d1a1a;--red-border:#da3633;
+  --yellow:#e3b341;--yellow-bg:#2d2100;--yellow-border:#9e6a03;
+  --purple:#d2a8ff;--purple-bg:#1a1030;--purple-border:#8957e5;
+  --orange:#ffa657;
+}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.h-left{display:flex;align-items:center;gap:12px}
+.h-badge{background:var(--orange);color:#000;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.05em}
+.h-title{font-size:16px;font-weight:700;color:var(--text)}
+.h-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.h-right{display:flex;align-items:center;gap:14px}
+.progress-bar{width:180px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--orange),var(--purple));border-radius:2px;transition:width 0.4s cubic-bezier(.4,0,.2,1)}
+.page-num{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;min-width:48px;text-align:right}
+.dots{display:flex;gap:4px;align-items:center}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--border2);transition:all 0.3s}
+.dot.active{background:var(--orange);width:16px;border-radius:3px}
+.dot.done{background:var(--orange);opacity:0.4}
+
+.main{flex:1;overflow:hidden;position:relative}
+.slide{position:absolute;inset:0;padding:1.75rem 3rem;display:flex;flex-direction:column;gap:1.1rem;opacity:0;transform:translateX(40px);transition:all 0.35s cubic-bezier(.4,0,.2,1);pointer-events:none;overflow-y:auto}
+.slide.active{opacity:1;transform:translateX(0);pointer-events:all}
+.slide.exit-left{opacity:0;transform:translateX(-40px)}
+.slide::-webkit-scrollbar{width:4px}
+.slide::-webkit-scrollbar-track{background:transparent}
+.slide::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+.footer{background:var(--bg2);border-top:1px solid var(--border);padding:0 3rem;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.btn{padding:8px 24px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s}
+.btn-prev{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+.btn-prev:hover:not(:disabled){background:var(--border);color:var(--text)}
+.btn-next{background:#9e6a03;color:#fff;border:1px solid var(--yellow-border)}
+.btn-next:hover:not(:disabled){background:var(--yellow-border)}
+.btn:disabled{opacity:0.3;cursor:not-allowed}
+
+.slide-title{font-size:26px;font-weight:700;color:var(--text);line-height:1.2}
+.slide-title-sm{font-size:20px;font-weight:700;color:var(--text)}
+.slide-sub{font-size:14px;color:var(--text3);margin-top:-0.6rem}
+
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+
+.topic-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;text-align:center;transition:all 0.2s}
+.topic-card:hover{transform:translateY(-2px)}
+.topic-icon{font-size:26px;margin-bottom:8px}
+.topic-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.topic-desc{font-size:12px;color:var(--text3)}
+
+.box{border-radius:10px;padding:1rem 1.25rem}
+.box-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.box-text{font-size:14px;line-height:1.7}
+.life-box{background:var(--green-bg);border:1px solid var(--green-border)}
+.life-box .box-label{color:var(--green)}
+.life-box .box-text{color:#aff5b4}
+.trap-box{background:var(--red-bg);border:1px solid var(--red-border)}
+.trap-box .box-label{color:var(--red)}
+.trap-box .box-text{color:#ffa198}
+.info-box{background:var(--blue-bg);border:1px solid var(--blue-border)}
+.info-box .box-label{color:var(--blue)}
+.info-box .box-text{color:#a5c8ff}
+.tip-box{background:var(--yellow-bg);border:1px solid var(--yellow-border)}
+.tip-box .box-label{color:var(--yellow)}
+.tip-box .box-text{color:#f0c96e}
+.purple-box{background:var(--purple-bg);border:1px solid var(--purple-border)}
+.purple-box .box-label{color:var(--purple)}
+.purple-box .box-text{color:#e2ccff}
+
+.code-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.code-header{background:var(--bg3);padding:8px 14px;font-size:12px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.code-body{padding:1.1rem 1.25rem;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text2);white-space:pre;line-height:1.9;overflow-x:auto}
+.ck{color:#ff7b72}.cs{color:#a5d6ff}.cm{color:#6e7681;font-style:italic}.cv{color:var(--orange)}.cf{color:var(--purple)}.cg{color:var(--green)}.cstr{color:#a5d6ff}.cb{color:var(--blue)}
+
+.step-list{display:flex;flex-direction:column;gap:10px}
+.step-item{display:flex;gap:12px;align-items:flex-start}
+.step-num{min-width:26px;height:26px;border-radius:50%;background:var(--green-bg);border:1px solid var(--green-border);color:var(--green);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-text{font-size:14px;color:var(--text2);line-height:1.7}
+.hl{color:var(--orange);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-g{color:var(--green);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-b{color:var(--blue);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-p{color:var(--purple);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-r{color:var(--red);font-family:'JetBrains Mono',monospace;font-size:13px}
+
+.quiz-wrap{background:var(--bg2);border:1px solid var(--purple-border);border-radius:12px;padding:1.5rem}
+.quiz-q{font-size:15px;font-weight:500;color:var(--text);margin-bottom:1rem;line-height:1.6}
+.quiz-opts{display:flex;flex-direction:column;gap:8px;margin-top:1rem}
+.quiz-opt{background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:11px 16px;font-size:14px;color:var(--text2);cursor:pointer;text-align:left;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s}
+.quiz-opt:hover:not(:disabled){border-color:var(--purple);color:var(--text)}
+.quiz-opt.correct{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.quiz-opt.wrong{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.quiz-feedback{font-size:13px;margin-top:12px;padding:10px 14px;border-radius:8px;display:none;line-height:1.6}
+.quiz-feedback.ok{background:var(--green-bg);color:#aff5b4;border:1px solid var(--green-border)}
+.quiz-feedback.ng{background:var(--red-bg);color:#ffa198;border:1px solid var(--red-border)}
+
+.summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.summary-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.1rem}
+.summary-title{font-size:13px;font-weight:700;color:var(--orange);margin-bottom:8px}
+.summary-body{font-size:12px;color:var(--text3);line-height:1.9;font-family:'JetBrains Mono',monospace}
+
+/* Git flow visual */
+.git-flow{display:flex;align-items:center;gap:0;overflow-x:auto;padding:0.5rem 0}
+.git-node{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:80px}
+.git-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid}
+.git-label{font-size:11px;color:var(--text3);text-align:center;font-family:'JetBrains Mono',monospace}
+.git-arrow{color:var(--border2);font-size:20px;margin:0 4px;margin-top:-18px}
+
+.branch-row{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);margin-bottom:6px}
+.branch-dot{width:10px;height:10px;border-radius:50%}
+.branch-name{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500}
+.branch-desc{font-size:12px;color:var(--text3);margin-left:auto}
+
+/* Area diagram */
+.area-wrap{display:flex;gap:10px}
+.area-box{flex:1;border-radius:10px;padding:1rem;border:1px solid;text-align:center}
+.area-title{font-size:13px;font-weight:700;margin-bottom:6px}
+.area-desc{font-size:11px;line-height:1.7}
+.area-arrow-col{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;color:var(--text3)}
+.area-cmd{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--orange)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="h-left">
+    <div class="h-badge">版控工具</div>
+    <div>
+      <div class="h-title">Git & GitHub 完整入門</div>
+      <div class="h-sub">從「存檔」到「協作」，一次搞懂版本控制的底層邏輯</div>
+    </div>
+  </div>
+  <div class="h-right">
+    <div class="dots" id="dots"></div>
+    <div class="progress-bar"><div class="progress-fill" id="pfill" style="width:11.11%"></div></div>
+    <div class="page-num" id="pnum">1 / 9</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- S1 封面 -->
+<div class="slide active" id="s1">
+  <div class="slide-title">🌿 Git & GitHub 完整入門</div>
+  <div class="slide-sub">為什麼寫程式一定要學版本控制？— 從「不小心刪掉」到「多人協作不打架」</div>
+  <div class="grid-3">
+    <div class="topic-card" style="border-color:var(--orange)">
+      <div class="topic-icon">📦</div>
+      <div class="topic-name" style="color:var(--orange)">Git 是什麼</div>
+      <div class="topic-desc">本機版本控制，記錄每次改動</div>
+    </div>
+    <div class="topic-card" style="border-color:var(--blue-border)">
+      <div class="topic-icon">☁️</div>
+      <div class="topic-name" style="color:var(--blue)">GitHub 是什麼</div>
+      <div class="topic-desc">雲端備份 + 多人協作平台</div>
+    </div>
+    <div class="topic-card" style="border-color:var(--purple-border)">
+      <div class="topic-icon">🔀</div>
+      <div class="topic-name" style="color:var(--purple)">Branch & PR</div>
+      <div class="topic-desc">平行開發，不互相干擾</div>
+    </div>
+  </div>
+  <div class="life-box box">
+    <div class="box-label">學完這份簡報，你能做到</div>
+    <div class="box-text">用指令管理程式碼歷史、建立分支獨立開發、把程式碼推上 GitHub，以及和別人協作而不互蓋彼此的工作 🚀</div>
+  </div>
+</div>
+
+<!-- S2 故事引入：Git 是什麼 -->
+<div class="slide" id="s2">
+  <div class="slide-title-sm">📖 為什麼需要 Git？</div>
+  <div class="life-box box">
+    <div class="box-label">生活例子：小明的論文災難</div>
+    <div class="box-text">
+      小明寫論文，每改一版就另存新檔：<br>
+      <code style="color:var(--orange);font-family:'JetBrains Mono',monospace">論文_final.docx → 論文_final2.docx → 論文_真的最終版.docx → 論文_老師改過.docx</code><br><br>
+      三個月後他完全不知道哪個版本才是最新的，改回去的方法也沒有了。<br><br>
+      <strong style="color:var(--green)">Git 就是幫你自動管理這些版本的工具，讓你隨時可以「回到過去」。</strong>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div>
+      <div class="trap-box box">
+        <div class="box-label">❌ 沒有 Git 的世界</div>
+        <div class="box-text">手動複製貼上、檔名加 _v2 _final _真的最終，出錯了不知道怎麼復原，多人合作直接覆蓋彼此的改動</div>
+      </div>
+    </div>
+    <div>
+      <div class="info-box box">
+        <div class="box-label">✅ 有 Git 的世界</div>
+        <div class="box-text">每次改動都有記錄，可以跳回任意歷史版本，多人同時改同一個專案也不會衝突</div>
+      </div>
+    </div>
+  </div>
+  <div class="tip-box box">
+    <div class="box-label">一句話記憶</div>
+    <div class="box-text">Git = 程式碼的時光機，GitHub = 放時光機的雲端倉庫</div>
+  </div>
+</div>
+
+<!-- S3 三個區域 -->
+<div class="slide" id="s3">
+  <div class="slide-title-sm">🗂️ Git 的三個區域</div>
+  <div class="tip-box box">
+    <div class="box-label">生活比喻：超商結帳流程</div>
+    <div class="box-text">小美在超商買東西：先把商品放進籃子（Working Directory）→ 拿到結帳台（Staging Area）→ 收據存檔（Repository）</div>
+  </div>
+  <div class="area-wrap">
+    <div class="area-box" style="background:var(--red-bg);border-color:var(--red-border)">
+      <div class="area-title" style="color:var(--red)">📝 Working Directory</div>
+      <div class="area-desc" style="color:#ffa198">你正在編輯的檔案，還沒告訴 Git<br><br>就像你正在逛超商，商品還在架上</div>
+    </div>
+    <div class="area-arrow-col">
+      <div class="area-cmd">git add</div>
+      <div>→</div>
+    </div>
+    <div class="area-box" style="background:var(--yellow-bg);border-color:var(--yellow-border)">
+      <div class="area-title" style="color:var(--yellow)">📋 Staging Area</div>
+      <div class="area-desc" style="color:#f0c96e">準備要存的改動，可以選擇哪些要存<br><br>就像把商品放進購物籃，還沒付錢</div>
+    </div>
+    <div class="area-arrow-col">
+      <div class="area-cmd">git commit</div>
+      <div>→</div>
+    </div>
+    <div class="area-box" style="background:var(--green-bg);border-color:var(--green-border)">
+      <div class="area-title" style="color:var(--green)">💾 Repository</div>
+      <div class="area-desc" style="color:#aff5b4">正式存檔的歷史記錄，永遠查得到<br><br>就像付完錢的收據，永久保存</div>
+    </div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header">🖥️ 基本流程指令</div>
+    <div class="code-body"><span class="cm"># 查看目前狀態</span>
+<span class="cg">git status</span>
+
+<span class="cm"># 把改動放進籃子（Staging）</span>
+<span class="cg">git add</span> <span class="cv">index.html</span>        <span class="cm"># 加單一檔案</span>
+<span class="cg">git add</span> <span class="cs">.</span>               <span class="cm"># 加所有改動</span>
+
+<span class="cm"># 正式存檔（Commit）</span>
+<span class="cg">git commit</span> <span class="ck">-m</span> <span class="cs">"新增首頁標題"</span></div>
+  </div>
+</div>
+
+<!-- S4 Commit 歷史 -->
+<div class="slide" id="s4">
+  <div class="slide-title-sm">🕐 Commit：每一次存檔都有名字</div>
+  <div class="life-box box">
+    <div class="box-label">生活例子：阿強的日記</div>
+    <div class="box-text">阿強每天寫日記，不只寫內容，還會寫上日期和標題。三個月後他想找「那天去台北玩」，直接搜標題就找到了。Commit 就是這個「有名字的存檔」。</div>
+  </div>
+  <div class="git-flow" style="padding:1rem;background:var(--bg2);border-radius:10px;border:1px solid var(--border)">
+    <div class="git-node">
+      <div class="git-circle" style="background:rgba(63,185,80,0.1);border-color:var(--green);color:var(--green)">🏠</div>
+      <div class="git-label">初始 commit<br><span style="color:var(--text4)">a1b2c3</span></div>
+    </div>
+    <div class="git-arrow">→</div>
+    <div class="git-node">
+      <div class="git-circle" style="background:rgba(88,166,255,0.1);border-color:var(--blue);color:var(--blue)">✏️</div>
+      <div class="git-label">新增首頁<br><span style="color:var(--text4)">d4e5f6</span></div>
+    </div>
+    <div class="git-arrow">→</div>
+    <div class="git-node">
+      <div class="git-circle" style="background:rgba(255,166,87,0.1);border-color:var(--orange);color:var(--orange)">🐛</div>
+      <div class="git-label">修復 bug<br><span style="color:var(--text4)">g7h8i9</span></div>
+    </div>
+    <div class="git-arrow">→</div>
+    <div class="git-node">
+      <div class="git-circle" style="background:rgba(210,168,255,0.1);border-color:var(--purple);color:var(--purple)">🚀</div>
+      <div class="git-label">上線功能<br><span style="color:var(--text4)">j0k1l2</span></div>
+    </div>
+    <div class="git-arrow">→</div>
+    <div class="git-node">
+      <div class="git-circle" style="background:rgba(245,166,87,0.2);border-color:var(--yellow);color:var(--yellow)">👉</div>
+      <div class="git-label" style="color:var(--yellow)">HEAD<br><span style="color:var(--text4)">現在位置</span></div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="code-wrap">
+      <div class="code-header">📜 查看歷史記錄</div>
+      <div class="code-body"><span class="cg">git log</span>             <span class="cm"># 完整記錄</span>
+<span class="cg">git log</span> <span class="ck">--oneline</span>  <span class="cm"># 簡潔版</span></div>
+    </div>
+    <div class="code-wrap">
+      <div class="code-header">⏪ 回到過去版本</div>
+      <div class="code-body"><span class="cm"># 回到某個 commit</span>
+<span class="cg">git checkout</span> <span class="cv">a1b2c3</span>
+
+<span class="cm"># 回到最新版本</span>
+<span class="cg">git checkout</span> <span class="cs">main</span></div>
+    </div>
+  </div>
+  <div class="tip-box box">
+    <div class="box-label">Commit 訊息寫作原則</div>
+    <div class="box-text">❌ 不好：<code style="color:var(--red);font-family:'JetBrains Mono',monospace">"update"</code> &nbsp;&nbsp; ✅ 好：<code style="color:var(--green);font-family:'JetBrains Mono',monospace">"feat: 新增會員登入頁面"</code></div>
+  </div>
+</div>
+
+<!-- S5 Branch -->
+<div class="slide" id="s5">
+  <div class="slide-title-sm">🌿 Branch：平行時空開發</div>
+  <div class="life-box box">
+    <div class="box-label">生活例子：小美的食譜實驗</div>
+    <div class="box-text">小美有一份基本牛肉麵食譜（main）。她想實驗加辣椒的版本，但又怕失敗毀了原本的配方。於是她影印一份，在影本上實驗（新建 branch）。成功了再把改動合回原本（merge）。</div>
+  </div>
+  <div style="background:var(--bg2);border-radius:10px;border:1px solid var(--border);padding:1rem">
+    <div class="branch-row">
+      <div class="branch-dot" style="background:var(--green)"></div>
+      <div class="branch-name" style="color:var(--green)">main</div>
+      <div class="branch-desc">穩定版本，隨時可上線</div>
+    </div>
+    <div style="margin-left:20px;border-left:2px dashed var(--border2);padding-left:12px">
+      <div class="branch-row" style="border-color:var(--blue-border)">
+        <div class="branch-dot" style="background:var(--blue)"></div>
+        <div class="branch-name" style="color:var(--blue)">feature/login</div>
+        <div class="branch-desc">阿強在開發登入功能</div>
+      </div>
+      <div class="branch-row" style="border-color:var(--purple-border)">
+        <div class="branch-dot" style="background:var(--purple)"></div>
+        <div class="branch-name" style="color:var(--purple)">feature/dark-mode</div>
+        <div class="branch-desc">小美在開發深色模式</div>
+      </div>
+    </div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header">🌿 Branch 操作指令</div>
+    <div class="code-body"><span class="cm"># 建立新分支</span>
+<span class="cg">git branch</span> <span class="cv">feature/login</span>
+
+<span class="cm"># 切換到分支（現代寫法）</span>
+<span class="cg">git switch</span> <span class="cv">feature/login</span>
+
+<span class="cm"># 建立 + 立刻切換</span>
+<span class="cg">git switch -c</span> <span class="cv">feature/login</span>
+
+<span class="cm"># 合併分支到 main</span>
+<span class="cg">git switch</span> <span class="cs">main</span>
+<span class="cg">git merge</span> <span class="cv">feature/login</span></div>
+  </div>
+</div>
+
+<!-- S6 GitHub：遠端倉庫 -->
+<div class="slide" id="s6">
+  <div class="slide-title-sm">☁️ GitHub = 雲端倉庫 + 協作平台</div>
+  <div class="info-box box">
+    <div class="box-label">Git vs GitHub 的差別</div>
+    <div class="box-text">
+      <strong style="color:var(--orange)">Git</strong> 是工具（安裝在你電腦上的程式），<strong style="color:var(--blue)">GitHub</strong> 是平台（存在網路上的倉庫）。<br>
+      就像 Word 是軟體，Google Drive 是雲端空間 — 兩個是不同東西，但可以搭配使用。
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="code-wrap">
+      <div class="code-header">🚀 第一次推上 GitHub</div>
+      <div class="code-body"><span class="cm"># 綁定遠端倉庫</span>
+<span class="cg">git remote add</span> <span class="cv">origin</span> <span class="cs">https://github.com/你的帳號/專案.git</span>
+
+<span class="cm"># 推送到 GitHub</span>
+<span class="cg">git push</span> <span class="ck">-u</span> <span class="cv">origin</span> <span class="cs">main</span>
+
+<span class="cm"># 之後每次推送只要</span>
+<span class="cg">git push</span></div>
+    </div>
+    <div class="code-wrap">
+      <div class="code-header">⬇️ 從 GitHub 取得專案</div>
+      <div class="code-body"><span class="cm"># 第一次抓取（clone）</span>
+<span class="cg">git clone</span> <span class="cs">https://github.com/帳號/專案.git</span>
+
+<span class="cm"># 之後更新（pull）</span>
+<span class="cg">git pull</span>
+
+<span class="cm"># pull = fetch + merge</span>
+<span class="cm"># 先抓遠端改動，再合併到本機</span></div>
+    </div>
+  </div>
+  <div class="tip-box box">
+    <div class="box-label">push vs pull 記憶法</div>
+    <div class="box-text">push = 推上去（本機 → 雲端）&nbsp;&nbsp;&nbsp; pull = 拉下來（雲端 → 本機）</div>
+  </div>
+</div>
+
+<!-- S7 Pull Request -->
+<div class="slide" id="s7">
+  <div class="slide-title-sm">🔀 Pull Request：正式提交改動的流程</div>
+  <div class="life-box box">
+    <div class="box-label">生活例子：阿強交報告給老師</div>
+    <div class="box-text">阿強寫完報告（在自己的 branch 改好），不直接貼到班級共享資料夾（不直接推到 main），而是先交給老師審查（開 PR）。老師看完沒問題才放進去（merge）。這樣可以確保品質，也留下討論記錄。</div>
+  </div>
+  <div class="step-list">
+    <div class="step-item">
+      <div class="step-num">1</div>
+      <div class="step-text">在自己的 branch 完成功能開發，<span class="hl">git push origin feature/login</span></div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">2</div>
+      <div class="step-text">到 GitHub 網頁點「Compare & Pull Request」，寫清楚這次改了什麼</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">3</div>
+      <div class="step-text">組員（或老師）進行 Code Review，留下意見或直接 <span class="hl-g">Approve</span></div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">4</div>
+      <div class="step-text">按下 <span class="hl-g">Merge Pull Request</span>，改動正式進入 main，完成！</div>
+    </div>
+  </div>
+  <div class="purple-box box">
+    <div class="box-label">為什麼要用 PR，不直接推 main？</div>
+    <div class="box-text">避免未完成或有 bug 的程式碼進入主線；留下審查記錄；方便多人協作討論。這是業界標準工作流程。</div>
+  </div>
+</div>
+
+<!-- S8 測驗 -->
+<div class="slide" id="s8">
+  <div class="slide-title-sm">🧠 來測試一下你學到了什麼</div>
+  <div class="quiz-wrap" id="q1wrap">
+    <div class="quiz-q">Q1. 小明改了 3 個檔案，只想 commit 其中 2 個，他應該怎麼做？</div>
+    <div class="quiz-opts" id="q1opts">
+      <button class="quiz-opt" onclick="answer('q1',this,false)">A. 直接 <code style="font-family:'JetBrains Mono',monospace">git commit -m "update"</code></button>
+      <button class="quiz-opt" onclick="answer('q1',this,true)">B. <code style="font-family:'JetBrains Mono',monospace">git add 檔案A 檔案B</code>，然後再 commit</button>
+      <button class="quiz-opt" onclick="answer('q1',this,false)">C. <code style="font-family:'JetBrains Mono',monospace">git add .</code>，然後再 commit</button>
+      <button class="quiz-opt" onclick="answer('q1',this,false)">D. 先刪掉第 3 個檔案再 commit</button>
+    </div>
+    <div class="quiz-feedback" id="q1fb"></div>
+  </div>
+  <div class="quiz-wrap" id="q2wrap" style="margin-top:12px">
+    <div class="quiz-q">Q2. Git 和 GitHub 的關係是？</div>
+    <div class="quiz-opts" id="q2opts">
+      <button class="quiz-opt" onclick="answer('q2',this,false)">A. 完全一樣的東西</button>
+      <button class="quiz-opt" onclick="answer('q2',this,false)">B. GitHub 是 Git 的付費版本</button>
+      <button class="quiz-opt" onclick="answer('q2',this,true)">C. Git 是本機工具，GitHub 是存放 Git 倉庫的雲端平台</button>
+      <button class="quiz-opt" onclick="answer('q2',this,false)">D. Git 是 GitHub 的一部分功能</button>
+    </div>
+    <div class="quiz-feedback" id="q2fb"></div>
+  </div>
+</div>
+
+<!-- S9 總結 -->
+<div class="slide" id="s9">
+  <div class="slide-title-sm">🎯 一句話記住每個概念</div>
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-title">📦 Git</div>
+      <div class="summary-body">本機的程式碼時光機<br>記錄每一次改動歷史</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-title">☁️ GitHub</div>
+      <div class="summary-body">Git 倉庫的雲端備份<br>也是多人協作的平台</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-title">🗂️ add → commit</div>
+      <div class="summary-body">先 add 選哪些要存<br>再 commit 正式存檔</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-title">🌿 Branch</div>
+      <div class="summary-body">平行時空開發<br>不影響主線穩定版本</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-title">⬆️ push / ⬇️ pull</div>
+      <div class="summary-body">push 推上雲端<br>pull 拉下更新</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-title">🔀 Pull Request</div>
+      <div class="summary-body">讓別人審查再合併<br>業界標準協作流程</div>
+    </div>
+  </div>
+  <div class="life-box box" style="margin-top:4px">
+    <div class="box-label">🏆 最終記憶點</div>
+    <div class="box-text">Git = 存檔記錄 ｜ Branch = 平行開發 ｜ GitHub = 雲端協作<br>每次改完就 <span class="hl">add → commit → push</span>，三步驟養成習慣，你的程式碼永遠安全 ✨</div>
+  </div>
+</div>
+
+</div><!-- end .main -->
+
+<div class="footer">
+  <button class="btn btn-prev" id="prev" onclick="go(-1)" disabled>← 上一頁</button>
+  <button class="btn btn-next" id="next" onclick="go(1)">下一頁 →</button>
+</div>
+
+<script>
+const total = 9;
+let cur = 1;
+
+function render(){
+  document.querySelectorAll('.slide').forEach((s,i)=>{
+    s.classList.remove('active','exit-left');
+  });
+  document.getElementById('s'+cur).classList.add('active');
+  document.getElementById('pfill').style.width=(cur/total*100)+'%';
+  document.getElementById('pnum').textContent=cur+' / '+total;
+  document.getElementById('prev').disabled=cur===1;
+  document.getElementById('next').disabled=cur===total;
+  // dots
+  const dc=document.getElementById('dots');
+  dc.innerHTML='';
+  for(let i=1;i<=total;i++){
+    const d=document.createElement('div');
+    d.className='dot'+(i===cur?' active':i<cur?' done':'');
+    dc.appendChild(d);
+  }
+}
+
+function go(dir){
+  const prev=document.getElementById('s'+cur);
+  prev.classList.remove('active');
+  if(dir<0) prev.style.transform='translateX(40px)';
+  else prev.classList.add('exit-left');
+  setTimeout(()=>{prev.style.transform='';prev.classList.remove('exit-left')},350);
+  cur+=dir;
+  render();
+}
+
+function answer(qid, btn, correct){
+  const opts=document.querySelectorAll('#'+qid+'opts .quiz-opt');
+  opts.forEach(o=>o.disabled=true);
+  btn.classList.add(correct?'correct':'wrong');
+  const fb=document.getElementById(qid+'fb');
+  fb.style.display='block';
+  if(correct){
+    fb.className='quiz-feedback ok';
+    fb.textContent='✅ 正確！Staging Area 讓你可以精確選擇哪些改動要進入這次的 commit。';
+    if(qid==='q2') fb.textContent='✅ 正確！Git 是工具，GitHub 是平台，就像 Word 和 Google Drive 的關係。';
+  } else {
+    fb.className='quiz-feedback ng';
+    fb.textContent='❌ 再想想～應該先 git add 指定的檔案，再 commit，這樣才能精確控制要存哪些改動。';
+    if(qid==='q2') fb.textContent='❌ 再想想～Git 是安裝在本機的版本控制工具，GitHub 是存放這些倉庫的雲端平台，兩者是不同東西。';
+  }
+}
+
+render();
+</script>
+</body>
+</html>
