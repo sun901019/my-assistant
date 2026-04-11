@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>電商 API 串接實戰練習</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--bg4:#2d333b;
+  --border:#30363d;--border2:#3d444d;
+  --text:#e6edf3;--text2:#c9d1d9;--text3:#8b949e;--text4:#6e7681;
+  --blue:#58a6ff;--blue-bg:#0d1926;--blue-border:#388bfd;
+  --green:#3fb950;--green-bg:#0d2818;--green-border:#238636;
+  --red:#f85149;--red-bg:#2d1a1a;--red-border:#da3633;
+  --yellow:#e3b341;--yellow-bg:#2d2100;--yellow-border:#9e6a03;
+  --purple:#d2a8ff;--purple-bg:#1a1030;--purple-border:#8957e5;
+  --orange:#ffa657;
+}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.h-left{display:flex;align-items:center;gap:12px}
+.h-badge{background:var(--purple-bg);border:1px solid var(--purple-border);color:var(--purple);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.05em}
+.h-title{font-size:16px;font-weight:700;color:var(--text)}
+.h-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.h-right{display:flex;align-items:center;gap:14px}
+.progress-bar{width:180px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--blue));border-radius:2px;transition:width 0.4s cubic-bezier(.4,0,.2,1)}
+.page-num{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;min-width:48px;text-align:right}
+.dots{display:flex;gap:4px;align-items:center}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--border2);transition:all 0.3s}
+.dot.active{background:var(--purple);width:16px;border-radius:3px}
+.dot.done{background:var(--purple);opacity:0.4}
+.main{flex:1;overflow:hidden;position:relative}
+.slide{position:absolute;inset:0;padding:1.6rem 3rem;display:flex;flex-direction:column;gap:1rem;opacity:0;transform:translateX(40px);transition:all 0.35s cubic-bezier(.4,0,.2,1);pointer-events:none;overflow-y:auto}
+.slide.active{opacity:1;transform:translateX(0);pointer-events:all}
+.slide.exit-left{opacity:0;transform:translateX(-40px)}
+.slide::-webkit-scrollbar{width:4px}
+.slide::-webkit-scrollbar-track{background:transparent}
+.slide::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.footer{background:var(--bg2);border-top:1px solid var(--border);padding:0 3rem;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.btn{padding:8px 24px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s}
+.btn-prev{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+.btn-prev:hover:not(:disabled){background:var(--border);color:var(--text)}
+.btn-next{background:var(--purple-border);color:#fff}
+.btn-next:hover:not(:disabled){background:#6e40c9}
+.btn:disabled{opacity:0.3;cursor:not-allowed}
+.slide-title{font-size:26px;font-weight:700;color:var(--text);line-height:1.2}
+.slide-sub{font-size:14px;color:var(--text3);margin-top:-0.5rem}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.box{border-radius:10px;padding:1rem 1.25rem}
+.box-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.box-text{font-size:14px;line-height:1.7}
+.life-box{background:var(--green-bg);border:1px solid var(--green-border)}
+.life-box .box-label{color:var(--green)}
+.life-box .box-text{color:#aff5b4}
+.trap-box{background:var(--red-bg);border:1px solid var(--red-border)}
+.trap-box .box-label{color:var(--red)}
+.trap-box .box-text{color:#ffa198}
+.info-box{background:var(--blue-bg);border:1px solid var(--blue-border)}
+.info-box .box-label{color:var(--blue)}
+.info-box .box-text{color:#a5c8ff}
+.tip-box{background:var(--yellow-bg);border:1px solid var(--yellow-border)}
+.tip-box .box-label{color:var(--yellow)}
+.tip-box .box-text{color:#f0c96e}
+.purple-box{background:var(--purple-bg);border:1px solid var(--purple-border)}
+.purple-box .box-label{color:var(--purple)}
+.purple-box .box-text{color:#e2ccff}
+.code-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.code-header{background:var(--bg3);padding:8px 14px;font-size:12px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.code-body{padding:1rem 1.25rem;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text2);white-space:pre;line-height:1.9;overflow-x:auto}
+.ck{color:#ff7b72}
+.cs{color:#a5d6ff}
+.cm{color:#6e7681;font-style:italic}
+.cv{color:var(--orange)}
+.cf{color:var(--purple)}
+.cg{color:var(--green)}
+.cb{color:var(--blue)}
+.hl{color:var(--orange);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-g{color:var(--green);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-b{color:var(--blue);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-r{color:var(--red);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-p{color:var(--purple);font-family:'JetBrains Mono',monospace;font-size:13px}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.tag-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.tag-blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.tag-red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.tag-yellow{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow-border)}
+.tag-purple{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
+.table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{background:var(--bg3);padding:10px 14px;font-size:12px;font-weight:700;color:var(--text3);text-align:left;border-bottom:1px solid var(--border)}
+td{padding:10px 14px;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+/* 填空練習 */
+.blank-wrap{background:var(--bg2);border:1px solid var(--purple-border);border-radius:12px;padding:1.5rem}
+.blank-title{font-size:14px;font-weight:700;color:var(--purple);margin-bottom:12px}
+.blank-code{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:2.2;color:var(--text2)}
+.blank-input{background:var(--bg3);border:1px dashed var(--purple-border);border-radius:4px;padding:2px 8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--yellow);outline:none;min-width:80px;transition:border-color 0.2s}
+.blank-input:focus{border-color:var(--purple);border-style:solid}
+.blank-input.correct{border-color:var(--green-border);border-style:solid;color:var(--green);background:var(--green-bg)}
+.blank-input.wrong{border-color:var(--red-border);border-style:solid;color:var(--red);background:var(--red-bg)}
+.check-btn{background:var(--purple-border);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s;margin-top:12px}
+.check-btn:hover{background:#6e40c9}
+.blank-feedback{font-size:13px;margin-top:10px;padding:10px 14px;border-radius:8px;display:none;line-height:1.6}
+.blank-feedback.ok{background:var(--green-bg);color:#aff5b4;border:1px solid var(--green-border);display:block}
+.blank-feedback.ng{background:var(--red-bg);color:#ffa198;border:1px solid var(--red-border);display:block}
+/* 步驟提示 */
+.hint-list{display:flex;flex-direction:column;gap:8px}
+.hint-item{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px}
+.hint-num{min-width:22px;height:22px;border-radius:50%;background:var(--purple-bg);border:1px solid var(--purple-border);color:var(--purple);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.hint-text{font-size:13px;color:var(--text2);line-height:1.7}
+/* 顯示答案按鈕 */
+.reveal-btn{background:var(--bg3);color:var(--text3);border:1px solid var(--border2);border-radius:8px;padding:7px 18px;font-size:13px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s}
+.reveal-btn:hover{background:var(--border2);color:var(--text)}
+.answer-block{display:none;margin-top:10px}
+.answer-block.show{display:block}
+/* Summary */
+.summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.summary-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.1rem}
+.summary-title{font-size:13px;font-weight:700;color:var(--purple);margin-bottom:8px}
+.summary-body{font-size:12px;color:var(--text3);line-height:1.9;font-family:'JetBrains Mono',monospace}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="h-left">
+    <div class="h-badge">實戰練習</div>
+    <div>
+      <div class="h-title">電商 API 串接實戰</div>
+      <div class="h-sub">第六週作業 — 跟著寫一遍，真的記住</div>
+    </div>
+  </div>
+  <div class="h-right">
+    <div class="dots" id="dots"></div>
+    <div class="progress-bar"><div class="progress-fill" id="pfill"></div></div>
+    <div class="page-num" id="pnum">1 / 10</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ── SLIDE 1: 封面 ── -->
+<div class="slide active" id="s0">
+  <div class="slide-title">實戰篇：跟著寫一遍</div>
+  <div class="slide-sub">這份簡報不是看的，是要動手填的</div>
+  <div class="table-wrap">
+    <table>
+      <tr><th>題目</th><th>函式</th><th>方法</th><th>難度</th></tr>
+      <tr><td>1</td><td>getProducts()</td><td><span class="tag tag-blue">GET</span></td><td>⭐ 入門</td></tr>
+      <tr><td>2</td><td>getCart()</td><td><span class="tag tag-blue">GET</span></td><td>⭐ 入門</td></tr>
+      <tr><td>3</td><td>getProductsSafe()</td><td><span class="tag tag-blue">GET</span> + 錯誤處理</td><td>⭐⭐ 進階</td></tr>
+      <tr><td>4</td><td>addToCart()</td><td><span class="tag tag-green">POST</span></td><td>⭐⭐ 進階</td></tr>
+      <tr><td>5</td><td>updateCartItem()</td><td><span class="tag tag-yellow">PATCH</span></td><td>⭐⭐ 進階</td></tr>
+      <tr><td>6</td><td>removeCartItem()</td><td><span class="tag tag-red">DELETE</span></td><td>⭐ 入門</td></tr>
+      <tr><td>7</td><td>clearCart()</td><td><span class="tag tag-red">DELETE</span></td><td>⭐ 入門</td></tr>
+    </table>
+  </div>
+  <div class="box tip-box">
+    <div class="box-label">怎麼用這份簡報</div>
+    <div class="box-text">
+      每頁先看「任務」，自己想一想怎麼寫 → 填填看 → 按「檢查答案」→ 看解說<br>
+      卡住了按「顯示答案」，但先試試看！
+    </div>
+  </div>
+</div>
+
+<!-- ── SLIDE 2: getProducts ── -->
+<div class="slide" id="s1">
+  <div class="slide-title">題目 1：getProducts()</div>
+  <div class="slide-sub">取得所有產品列表，最基礎的 GET 請求</div>
+  <div class="grid-2">
+    <div>
+      <div class="hint-list" style="margin-bottom:12px">
+        <div class="hint-item"><div class="hint-num">1</div><div class="hint-text">用 <span class="hl-b">fetch()</span> 發 GET 請求到 products 端點</div></div>
+        <div class="hint-item"><div class="hint-num">2</div><div class="hint-text">第一個 await 等 response，第二個 await 等 <span class="hl-b">.json()</span></div></div>
+        <div class="hint-item"><div class="hint-num">3</div><div class="hint-text">API 回傳的資料在 <span class="hl-b">data.products</span>，記得 return</div></div>
+      </div>
+      <div class="blank-wrap">
+        <div class="blank-title">✏️ 填填看</div>
+        <div class="blank-code"><span class="ck">async</span> <span class="ck">function</span> <span class="cf">getProducts</span>() {
+  <span class="ck">const</span> <span class="cv">response</span> = <input class="blank-input" id="q1a" placeholder="___" size="7"> <span class="cf">fetch</span>(
+    <span class="cs">`${BASE_URL}/api/.../products`</span>
+  );
+  <span class="ck">const</span> <span class="cv">data</span> = <span class="ck">await</span> <span class="cv">response</span>.<input class="blank-input" id="q1b" placeholder="___" size="6">();
+  <span class="ck">return</span> <span class="cv">data</span>.<input class="blank-input" id="q1c" placeholder="___" size="9">;
+}</div>
+        <button class="check-btn" onclick="check1()">檢查答案</button>
+        <div class="blank-feedback" id="fb1"></div>
+      </div>
+    </div>
+    <div>
+      <button class="reveal-btn" onclick="toggleAnswer('ans1')">顯示完整答案</button>
+      <div class="answer-block" id="ans1">
+        <div class="code-wrap" style="margin-top:10px">
+          <div class="code-header">✅ 正確答案</div>
+          <div class="code-body"><span class="ck">async</span> <span class="ck">function</span> <span class="cf">getProducts</span>() {
+  <span class="ck">const</span> <span class="cv">response</span> = <span class="ck">await</span> <span class="cf">fetch</span>(
+    <span class="cs">`${BASE_URL}/api/.../products`</span>
+  );
+  <span class="ck">const</span> <span class="cv">data</span> = <span class="ck">await</span> <span class="cv">response</span>.<span class="cf">json</span>();
+  <span class="ck">return</span> <span class="cv">data</span>.<span class="cv">products</span>;
+}</div>
+        </div>
+        <div class="box life-box" style="margin-top:10px">
+          <div class="box-label">關鍵記憶</div>
+          <div class="box-text">兩個 await 缺一不可：<br><span class="hl-g">await fetch()</span> + <span class="hl-g">await response.json()</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SLIDE 3: getCart ── -->
+<div class="slide" id="s2">
+  <div class="slide-title">題目 2：getCart()</div>
+  <div class="slide-sub">取得購物車，回傳格式跟 getProducts 不一樣</div>
+  <div class="grid-2">
+    <div>
+      <div class="box info-box" style="margin-bottom:12px">
+        <div class="box-label">這題的差別</div>
+        <div class="box-text">
+          URL 結尾換成 <span class="hl-b">/carts</span><br>
+          回傳要包成物件：<br>
+          <span class="hl-g">{ carts, total, finalTotal }</span>
+        </div>
+      </div>
+      <div class="blank-wrap">
+        <div class="blank-title">✏️ 填填看</div>
+        <div class="blank-code"><span class="ck">async</span> <span class="ck">function</span> <span class="cf">getCart</span>() {
+  <span class="ck">const</span> <span class="cv">response</span> = <span class="ck">await</span> <span class="cf">fetch</span>(
+    <span class="cs">`${BASE_URL}/api/.../</span><input class="blank-input" id="q2a" placeholder="___" size="6"><span class="cs">`</span>
+  );
+  <span class="ck">const</span> <span class="cv">data</span> = <span class="ck">await</span> <span class="cv">response</span>.<span class="cf">json</span>();
+  <span class="ck">return</span> {
+    <span class="cv">carts</span>: <span class="cv">data</span>.<input class="blank-input" id="q2b" placeholder="___" size="6">,
+    <span class="cv">total</span>: <span class="cv">data</span>.<input class="blank-input" id="q2c" placeholder="___" size="6">,
+    <span class="cv">finalTotal</span>: <span class="cv">data</span>.<input class="blank-input" id="q2d" placeholder="____" size="11">,
+  };
+}</div>
+        <button class="check-btn" onclick="check2()">檢查答案</button>
+        <div class="blank-feedback" id="fb2"></div>
+      </div>
+    </div>
+    <div>
+      <button class="reveal-btn" onclick="toggleAnswer('ans2')">顯示完整答案</button>
+      <div class="answer-block" id="ans2">
+        <div class="code-wrap" style="margin-top:10px">
+          <div class="code-header">✅ 正確答案</div>
+          <div class="code-body"><span class="ck">async</span> <span class="ck">function</span> <span class="cf">getCart</span>() {
+  <span class="ck">const</span> <span class="cv">response</span> = <span class="ck">await</span> <span class="cf">fetch</span>(
+    <span class="cs">`${BASE_URL}/api/.../carts`</span>
+  );
+  <span class="ck">const</span> <span class="cv">data</span> = <span class="ck">await</span> <span class="cv">response</span>.<span class="cf">json</span>();
+  <span class="ck">return</span> {
+    <span class="cv">carts</span>: <span class="cv">data</span>.<span class="cv">carts</span>,
+    <span class="cv">total</span>: <span class="cv">data</span>.<span class="cv">total</span>,
+    <span class="cv">finalTotal</span>: <span class="cv">data</span>.<span class="cv">finalTotal</span>,
+  };
+}</div>
+        </div>
+        <div class="box tip-box" style="margin-top:10px">
+          <div class="box-label">為什麼要包成物件？</div>
+          <div class="box-text">呼叫端需要三個值，一起回傳比較方便。這是作業的規定格式。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SLIDE 4: getProductsSafe ── -->
+<div class="slide" id="s3">
+  <div class="slide-title">題目 3：getProductsSafe()</div>
+  <div class="slide-sub">getProducts + 錯誤處理，這題要同時用 response.ok 和 try/catch</div>
+  <div class="grid-2">
+    <div>
+      <div class="hint-list" style="margin-bottom:12px">
+        <div class="hint-item"><div class="hint-num">1</div><div class="hint-text">整個包在 <span class="hl-p">try { } catch (error) { }</span></div></div>
+        <div class="hint-item"><div class="hint-num">2</div><div class="hint-text">fetch 完後檢查 <span class="hl-b">response.ok</span>，不成功就 <span class="hl-r">throw new Error()</span></div></div>
+        <div class="hint-item"><div class="hint-num">3</div><div class="hint-text">成功回傳 <span class="hl-g">{ success: true, data: [...] }</span></div></div>
+        <div class="hint-item"><div class="hint-num">4</div><div class="hint-text">失敗回傳 <span class="hl-r">{ success: false, error: error.message }</span></div></div>
+      </div>
+    </div>
+    <div>
+      <button class="reveal-btn" onclick="toggleAnswer('ans3')">顯示完整答案</button>
+      <div class="answer-block" id="ans3">
+        <div class="code-wrap" style="margin-top:10px">
+          <div class="code-header">✅ 正確答案</div>
+          <div class="code-body"><span class="ck">async</span> <span class="ck">function</span> <span class="cf">getProductsSafe</span>() {
+  <span class="ck">try</span> {
+    <span class="ck">const</span> <span class="cv">response</span> = <span class="ck">await</span> <span class="cf">fetch</span>(<span class="cs">`...`</span>);
+    <span class="ck">if</span> (!<span class="cv">response</span>.<span class="cg">ok</span>) {
+      <span class="ck">throw</span> <span class="ck">new</span> <span class="cf">Error</span>(<span class="cs">`HTTP error! status: ${response.status}`</span>);
+    }
+    <span class="ck">const</span> <span class="cv">data</span> = <span class="ck">await</span> <span class="cv">response</span>.<span class="cf">json</span>();
+    <span class="ck">return</span> { <span class="cv">success</span>: <span class="ck">true</span>, <span class="cv">data</span>: <span class="cv">data</span>.<span class="cv">products</span> };
+  } <span class="ck">catch</span> (<span class="cv">error</span>) {
+    <span class="ck">return</span> { <span class="cv">success</span>: <span class="ck">false</span>, <span class="cv">error</span>: <span class="cv">error</span>.<span class="cv">message</span> };
+  }
+}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="blank-wrap">
+    <div class="blank-title">✏️ 填填看 — 把空格填完</div>
+    <div class="blank-code"><span class="ck">async</span> <span class="ck">function</span> <span class="cf">getProductsSafe</span>() {
+  <span class="ck">try</span> {
+    <span class="ck">const</span> <span class="cv">response</span> = <span class="ck">await</span> <span class="cf">fetch</span>(<span class="cs">`...`</span>);
+    <span class="ck">if</span> (!<span class="cv">response</span>.<input class="blank-input" id="q3a" placeholder="__" size="4">) {
+      <span class="ck">throw</span> <span class="ck">new</span> <input class="blank-input" id="q3b" placeholder="___" size="6">(<span class="cs">`HTTP error!...`</span>);
+    }
+    <span class="ck">const</span> <span class="cv">data</span> = <span class="ck">await</span> <span class="cv">response</span>.<span class="cf">json</span>();
+    <span class="ck">return</span> { <span class="cv">success</span>: <span class="ck">true</span>, <span class="cv">data</span>: <span class="cv">data</span>.<span class="cv">products</span> };
+  } <span class="ck">catch</span> (<span class="cv">error</span>) {
+    <span class="ck">return</span> { <span class="cv">success</span>: <input class="blank-input" id="q3c" placeholder="____" size="6">, <span class="cv">error</span>: <span class="cv">error</span>.<input class="blank-input" id="q3d" placeholder="___" size="8"> };
+  }
+}</div>
+    <button class="check-btn" onclick="check3()">檢查答案</button>
+    <div class="blank-feedback" id="fb3"></div>
+  </div>
+</div>
+
+<!-- ── SLIDE 5: addToCart ── -->
+<div class="slide" id="s4">
+  <div class="slide-title">題目 4：addToCart()</div>
+  <div class="slide-sub">POST 請求，三個要素缺一不可</div>
+  <div class="grid-2">
+    <div>
+      <div class="box purple-box" style="margin-bottom:12px">
+        <div class="box-label">POST 三要素</div>
+        <div class="box-text">
+          ① <span class="hl-p">method: 'POST'</span><br>
+          ② <span class="hl-p">headers: { 'Content-Type': 'application/json' }</span><br>
+          ③ <span class="hl-p">body: JSON.stringify({ data: { ... } })</span>
+        </div>
+      </div>
+      <div class="box tip-box">
+        <div class="box-label">LiveJS 特有規定</div>
+        <div class="box-text">body 要在外面包一層 <span class="hl">{ data: ... }</span>，不是每個 API 都這樣，看文件決定</div>
+      </div>
+    </div>
+    <div>
+      <button class="reveal-btn" onclick="toggleAnswer('ans4')">顯示完整答案</button>
+      <div class="answer-block" id="ans4">
+        <div class="code-wrap" style="margin-top:10px">
+          <div class="code-header">✅ 正確答案</div>
+          <div class="code-body"><span class="ck">async</span> <span class="ck">function</span> <span class="cf">addToCart</span>(<span class="cv">productId</span>, <span class="cv">quantity</span>) {
+  <span class="ck">const</span> <span class="cv">response</span> = <span class="ck">await</span> <span class="cf">fetch</span>(<span class="cs">`...carts`</span>, {
+    <span class="cv">method</span>: <span class="cs">'POST'</span>,
+    <span class="cv">headers</span>: {
+      <span class="cs">'Content-Type'</span>: <span class="cs">'application/json'</span>
+    },
+    <span class="cv">body</span>: <span class="cf">JSON.stringify</span>({
+      <span class="cv">data</span>: { <span class="cv">productId</span>, <span class="cv">quantity</span> }
+    })
+  });
+  <span class="ck">return</span> <span class="ck">await</span> <span class="cv">response</span>.<span class="cf">json</span>();
+}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="blank-wrap">
+    <div class="blank-title">✏️ 填填看</div>
+    <div class="blank-code"><span class="ck">async</span> <span class="ck">function</span> <span class="cf">addToCart</span>(<span class="cv">productId</span>, <span class="cv">quantity</span>) {
+  <span class="ck">const</span> <span class="cv">response</span> = <span class="ck">await</span> <span class="cf">fetch</span>(<span class="cs">`...carts`</span>, {
+    <span class="cv">method</span>: <input class="blank-input" id="q4a" placeholder="'___'" size="8">,
+    <span class="cv">headers</span>: { <span class="cs">'Content-Type'</span>: <input class="blank-input" id="q4b" placeholder="'___'" size="18"> },
+    <span class="cv">body</span>: <input class="blank-input" id="q4c" placeholder="____" size="14">({ <span class="cv">data</span>: { <span class="cv">productId</span>, <span class="cv">quantity</span> } })
+  });
+  <span class="ck">return</span> <span class="ck">await</span> <span class="cv">response</span>.<span class="cf">json</span>();
+}</div>
+    <button class="check-btn" onclick="check4()">檢查答案</button>
+    <div class="blank-feedback" id="fb4"></div>
+  </div>
+</div>
+
+<!-- ── SLIDE 6: updateCartItem ── -->
+<div class="slide" id="s5">
+  <div class="slide-title">題目 5：updateCartItem()</div>
+  <div class="slide-sub">PATCH 請求，只改購物車裡的數量</div>
+  <div class="grid-2">
+    <div>
+      <div class="box info-box" style="margin-bottom:12px">
+        <div class="box-label">跟 addToCart 的差別</div>
+        <div class="box-text">
+          method 換成 <span class="hl-b">'PATCH'</span><br>
+          body 換成 <span class="hl-b">{ data: { id: cartId, quantity } }</span><br>
+          注意是 <span class="hl-b">id</span>（購物車 id），不是 productId
+        </div>
+      </div>
+      <div class="box tip-box">
+        <div class="box-label">為什麼用 PATCH 不用 PUT？</div>
+        <div class="box-text">只改數量這一個欄位，PATCH 只送要改的部分就好，不用整筆重送</div>
+      </div>
+    </div>
+    <div>
+      <button class="reveal-btn" onclick="toggleAnswer('ans5')">顯示完整答案</button>
+      <div class="answer-block" id="ans5">
+        <div class="code-wrap" style="margin-top:10px">
+          <div class="code-header">✅ 正確答案</div>
+          <div class="code-body"><span class="ck">async</span> <span class="ck">function</span> <span class="cf">updateCartItem</span>(<span class="cv">cartId</span>, <span class="cv">quantity</span>) {
+  <span class="ck">const</span> <span class="cv">response</span> = <span class="ck">await</span> <span class="cf">fetch</span>(<span class="cs">`...carts`</span>, {
+    <span class="cv">method</span>: <span class="cs">'PATCH'</span>,
+    <span class="cv">headers</span>: {
+      <span class="cs">'Content-Type'</span>: <span class="cs">'application/json'</span>
+    },
+    <span class="cv">body</span>: <span class="cf">JSON.stringify</span>({
+      <span class="cv">data</span>: { <span class="cv">id</span>: <span class="cv">cartId</span>, <span class="cv">quantity</span> }
+    })
+  });
+  <span class="ck">return</span> <span class="ck">await</span> <span class="cv">response</span>.<span class="cf">json</span>();
+}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="blank-wrap">
+    <div class="blank-title">✏️ 填填看 — 跟上題對比著寫</div>
+    <div class="blank-code"><span class="ck">async</span> <span class="ck">function</span> <span class="cf">updateCartItem</span>(<span class="cv">cartId</span>, <span class="cv">quantity</span>) {
+  <span class="ck">const</span> <span class="cv">response</span> = <span class="ck">await</span> <span class="cf">fetch</span>(<span class="cs">`...carts`</span>, {
+    <span class="cv">method</span>: <input class="blank-input" id="q5a" placeholder="'_____'" size="9">,
+    <span class="cv">headers</span>: { <span class="cs">'Content-Type'</span>: <span class="cs">'application/json'</span> },
+    <span class="cv">body</span>: <span class="cf">JSON.stringify</span>({
+      <span class="cv">data</span>: { <span class="cv">id</span>: <input class="blank-input" id="q5b" placeholder="___" size="7">, <span class="cv">quantity</span> }
+    })
+  });
+  <span class="ck">return</span> <span class="ck">await</span> <span class="cv">response</span>.<span class="cf">json</span>();
+}</div>
+    <button class="check-btn" onclick="check5()">檢查答案</button>
+    <div class="blank-feedback" id="fb5"></div>
+  </div>
+</div>
+
+<!-- ── SLIDE 7: removeCartItem ── -->
+<div class="slide" id="s6">
+  <div class="slide-title">題目 6：removeCartItem()</div>
+  <div class="slide-sub">DELETE 單筆，URL 要帶 id</div>
+  <div class="grid-2">
+    <div>
+      <div class="box info-box" style="margin-bottom:12px">
+        <div class="box-label">DELETE 的特色</div>
+        <div class="box-text">
+          不需要 body<br>
+          要刪哪一筆，直接寫在 URL：<br>
+          <span class="hl-b">/carts/<strong>${cartId}</strong></span>
+        </div>
+      </div>
+      <div class="blank-wrap">
+        <div class="blank-title">✏️ 填填看</div>
+        <div class="blank-code"><span class="ck">async</span> <span class="ck">function</span> <span class="cf">removeCartItem</span>(<span class="cv">cartId</span>) {
+  <span class="ck">const</span> <span class="cv">response</span> = <span class="ck">await</span> <span class="cf">fetch</span>(
+    <span class="cs">`${BASE_URL}/api/.../carts/</span><input class="blank-input" id="q6a" placeholder="________" size="10"><span class="cs">`</span>,
+    { <span class="cv">method</span>: <input class="blank-input" id="q6b" placeholder="'______'" size="10"> }
+  );
+  <span class="ck">return</span> <span class="ck">await</span> <span class="cv">response</span>.<span class="cf">json</span>();
+}</div>
+        <button class="check-btn" onclick="check6()">檢查答案</button>
+        <div class="blank-feedback" id="fb6"></div>
+      </div>
+    </div>
+    <div>
+      <button class="reveal-btn" onclick="toggleAnswer('ans6')">顯示完整答案</button>
+      <div class="answer-block" id="ans6">
+        <div class="code-wrap" style="margin-top:10px">
+          <div class="code-header">✅ 正確答案</div>
+          <div class="code-body"><span class="ck">async</span> <span class="ck">function</span> <span class="cf">removeCartItem</span>(<span class="cv">cartId</span>) {
+  <span class="ck">const</span> <span class="cv">response</span> = <span class="ck">await</span> <span class="cf">fetch</span>(
+    <span class="cs">`${BASE_URL}/api/.../carts/${cartId}`</span>,
+    { <span class="cv">method</span>: <span class="cs">'DELETE'</span> }
+  );
+  <span class="ck">return</span> <span class="ck">await</span> <span class="cv">response</span>.<span class="cf">json</span>();
+}</div>
+        </div>
+        <div class="box life-box" style="margin-top:10px">
+          <div class="box-label">跟 clearCart 的差別</div>
+          <div class="box-text">
+            removeCartItem → URL 帶 <span class="hl-g">${cartId}</span>（刪一筆）<br>
+            clearCart → URL 不帶 id（刪全部）
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SLIDE 8: clearCart ── -->
+<div class="slide" id="s7">
+  <div class="slide-title">題目 7：clearCart()</div>
+  <div class="slide-sub">DELETE 全部，跟 removeCartItem 只差在 URL</div>
+  <div class="grid-2">
+    <div>
+      <div class="box tip-box" style="margin-bottom:12px">
+        <div class="box-label">這題最簡單</div>
+        <div class="box-text">
+          URL 不帶 id → <span class="hl-g">/carts</span>（刪全部）<br>
+          method: 'DELETE'<br>
+          不需要 body
+        </div>
+      </div>
+      <div class="blank-wrap">
+        <div class="blank-title">✏️ 填填看</div>
+        <div class="blank-code"><span class="ck">async</span> <span class="ck">function</span> <span class="cf">clearCart</span>() {
+  <span class="ck">const</span> <span class="cv">response</span> = <span class="ck">await</span> <span class="cf">fetch</span>(
+    <span class="cs">`${BASE_URL}/api/.../</span><input class="blank-input" id="q7a" placeholder="____" size="7"><span class="cs">`</span>,
+    { <span class="cv">method</span>: <input class="blank-input" id="q7b" placeholder="'______'" size="10"> }
+  );
+  <span class="ck">return</span> <span class="ck">await</span> <span class="cv">response</span>.<span class="cf">json</span>();
+}</div>
+        <button class="check-btn" onclick="check7()">檢查答案</button>
+        <div class="blank-feedback" id="fb7"></div>
+      </div>
+    </div>
+    <div>
+      <div class="box info-box">
+        <div class="box-label">七題完整對照</div>
+        <div class="box-text" style="font-family:'JetBrains Mono',monospace;font-size:12px;line-height:2">
+          <span style="color:var(--blue)">GET</span>    /products     → getProducts<br>
+          <span style="color:var(--blue)">GET</span>    /carts        → getCart<br>
+          <span style="color:var(--blue)">GET</span>    /products +ok → getProductsSafe<br>
+          <span style="color:var(--green)">POST</span>   /carts        → addToCart<br>
+          <span style="color:var(--yellow)">PATCH</span>  /carts        → updateCartItem<br>
+          <span style="color:var(--red)">DELETE</span> /carts/:id    → removeCartItem<br>
+          <span style="color:var(--red)">DELETE</span> /carts        → clearCart
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SLIDE 9: 常見錯誤整理 ── -->
+<div class="slide" id="s8">
+  <div class="slide-title">常見錯誤 & 怎麼 Debug</div>
+  <div class="slide-sub">卡住的時候，先看這裡</div>
+  <div class="grid-2">
+    <div>
+      <div class="box trap-box" style="margin-bottom:10px">
+        <div class="box-label">❌ 拿到 undefined</div>
+        <div class="box-text">
+          <strong>可能原因：</strong><br>
+          1. <span class="hl-r">response.json()</span> 漏了 await<br>
+          2. 函式裡沒有 return<br>
+          3. <span class="hl-r">data.products</span> 路徑寫錯<br><br>
+          <strong>Debug 方法：</strong>一層層加 console.log
+        </div>
+      </div>
+      <div class="box trap-box">
+        <div class="box-label">❌ POST 沒效果</div>
+        <div class="box-text">
+          1. 忘了加 <span class="hl-r">Content-Type</span> header<br>
+          2. body 沒有用 <span class="hl-r">JSON.stringify()</span><br>
+          3. LiveJS 忘記包 <span class="hl-r">{ data: ... }</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="box life-box" style="margin-bottom:10px">
+        <div class="box-label">✅ Debug 三步驟</div>
+        <div class="box-text" style="font-family:'JetBrains Mono',monospace;font-size:12px;line-height:2.2">
+          console.log(response);<br>
+          <span style="color:var(--text3);font-size:11px">// ← fetch 回了什麼？</span><br>
+          console.log(data);<br>
+          <span style="color:var(--text3);font-size:11px">// ← parse 完是什麼結構？</span><br>
+          console.log(data.products);<br>
+          <span style="color:var(--text3);font-size:11px">// ← 路徑對不對？</span>
+        </div>
+      </div>
+      <div class="box info-box">
+        <div class="box-label">Promise pending 還在？</div>
+        <div class="box-text">
+          看到 <span class="hl-b">Promise { &lt;pending&gt; }</span><br>
+          → 某個地方漏了 <span class="hl-g">await</span><br>
+          → 從第一個 await 往下查
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SLIDE 10: 總結 ── -->
+<div class="slide" id="s9">
+  <div class="slide-title">實戰總結</div>
+  <div class="slide-sub">三個 pattern 記住，七個函式全部搞定</div>
+  <div class="summary-grid" style="margin-bottom:10px">
+    <div class="summary-card">
+      <div class="summary-title">Pattern 1：GET</div>
+      <div class="summary-body">await fetch(url)<br>await response.json()<br>return data.xxx<br><br>→ getProducts / getCart</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-title">Pattern 2：GET + 錯誤處理</div>
+      <div class="summary-body">try { ... } catch (e) { }<br>if (!response.ok) throw Error<br>return { success, data / error }<br><br>→ getProductsSafe</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-title">Pattern 3：POST / PATCH</div>
+      <div class="summary-body">fetch(url, {<br>  method: 'POST'/'PATCH',<br>  headers: { Content-Type },<br>  body: JSON.stringify({data})<br>})<br>→ addToCart / updateCartItem</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-title">Pattern 4：DELETE</div>
+      <div class="summary-body">fetch(url 或 url/id, {<br>  method: 'DELETE'<br>})<br>不需要 body<br><br>→ removeCartItem / clearCart</div>
+    </div>
+  </div>
+  <div class="box purple-box">
+    <div class="box-label">一句話記住</div>
+    <div class="box-text" style="font-size:15px;font-weight:700">
+      GET 兩個 await → POST 三要素 → PATCH/DELETE 換方法就好
+    </div>
+  </div>
+</div>
+
+</div><!-- end .main -->
+
+<div class="footer">
+  <button class="btn btn-prev" id="btnPrev" onclick="go(-1)" disabled>← 上一頁</button>
+  <button class="btn btn-next" id="btnNext" onclick="go(1)">下一頁 →</button>
+</div>
+
+<script>
+const TOTAL = 10;
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const dotsEl = document.getElementById('dots');
+const pfill = document.getElementById('pfill');
+const pnum = document.getElementById('pnum');
+const btnPrev = document.getElementById('btnPrev');
+const btnNext = document.getElementById('btnNext');
+
+for(let i=0;i<TOTAL;i++){
+  const d=document.createElement('div');
+  d.className='dot'+(i===0?' active':'');
+  dotsEl.appendChild(d);
+}
+
+function go(dir){
+  const prev=cur;
+  cur=Math.max(0,Math.min(TOTAL-1,cur+dir));
+  if(cur===prev)return;
+  slides[prev].classList.remove('active');
+  slides[prev].classList.add('exit-left');
+  setTimeout(()=>slides[prev].classList.remove('exit-left'),400);
+  slides[cur].classList.add('active');
+  const dots=document.querySelectorAll('.dot');
+  dots.forEach((d,i)=>{d.className='dot'+(i===cur?' active':i<cur?' done':'');});
+  pfill.style.width=((cur+1)/TOTAL*100)+'%';
+  pnum.textContent=(cur+1)+' / '+TOTAL;
+  btnPrev.disabled=cur===0;
+  btnNext.disabled=cur===TOTAL-1;
+  btnNext.textContent=cur===TOTAL-1?'完成 ✓':'下一頁 →';
+}
+
+pfill.style.width=(1/TOTAL*100)+'%';
+btnPrev.disabled=true;
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ')go(1);
+  if(e.key==='ArrowLeft')go(-1);
+});
+
+function toggleAnswer(id){
+  const el=document.getElementById(id);
+  el.classList.toggle('show');
+}
+
+function setResult(fbId, inputs, answers, hints){
+  let allCorrect=true;
+  inputs.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    const val=el.value.trim().replace(/['"]/g,'').toLowerCase();
+    const ans=answers[i].replace(/['"]/g,'').toLowerCase();
+    if(val===ans){el.classList.add('correct');el.classList.remove('wrong');}
+    else{el.classList.add('wrong');el.classList.remove('correct');allCorrect=false;}
+  });
+  const fb=document.getElementById(fbId);
+  if(allCorrect){fb.className='blank-feedback ok';fb.textContent='✅ 完全正確！'+(hints||'');}
+  else{fb.className='blank-feedback ng';fb.textContent='❌ 還有空格不對，再想想看！';}
+}
+
+function check1(){setResult('fb1',['q1a','q1b','q1c'],['await','json','products'],' fetch 兩兄弟都要 await！');}
+function check2(){setResult('fb2',['q2a','q2b','q2c','q2d'],['carts','carts','total','finaltotal']);}
+function check3(){setResult('fb3',['q3a','q3b','q3c','q3d'],['ok','Error','false','message']);}
+function check4(){setResult('fb4',['q4a','q4b','q4c'],['POST','application/json','JSON.stringify']);}
+function check5(){setResult('fb5',['q5a','q5b'],['PATCH','cartId']);}
+function check6(){setResult('fb6',['q6a','q6b'],['${cartId}','DELETE'],' URL 帶 id 才能刪單筆！');}
+function check7(){setResult('fb7',['q7a','q7b'],['carts','DELETE'],' 不帶 id 就是刪全部！');}
+</script>
+</body>
+</html>

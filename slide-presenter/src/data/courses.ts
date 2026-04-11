@@ -36,4 +36,16 @@ export const courses: readonly CourseInfo[] = [
     type: 'html',
     htmlPath: '/my-assistant/slides/fetch-api-basics.html',
   },
+  {
+    id: 'fetch-api-practice',
+    title: '電商 API 串接實戰練習',
+    subtitle: '填空 + 即時檢查，七個函式一次練熟',
+    icon: '✏️',
+    slideId: 'fetch-api-practice',
+    themeColor: 'purple',
+    tags: ['JavaScript', 'fetch', '實戰練習', 'async/await'],
+    createdAt: '2026-04-11',
+    type: 'html',
+    htmlPath: '/my-assistant/slides/fetch-api-practice.html',
+  },
 ]
