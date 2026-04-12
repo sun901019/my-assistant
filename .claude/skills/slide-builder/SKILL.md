@@ -1,80 +1,56 @@
 ---
 name: slide-builder
 description: |
-  互動式簡報生成器。當小眉導師模式教學完成後，把教學內容轉成 Vue 互動簡報。
-  觸發：「幫我做成簡報」「收斂成簡報」「產出簡報」「把剛才的內容做成簡報」。
-  需要有教學討論內容才能執行。
+  簡報生成器。自動判斷輸出格式：
+  - 有小眉導師模式的教學 context → Vue 互動簡報（存入 slide-presenter，有測驗/動畫）
+  - 獨立請求「我想學 X」「X 做成簡報」「圖解 X」→ HTML 靜態簡報（快速輸出）
+  觸發：「做成簡報」「收斂成簡報」「產出簡報」「我想學 X」「X 做成簡報」「圖解 X」「幫我了解 X」
 argument-hint: [主題名稱]
 ---
 
-# slide-builder — 互動式簡報生成器
+# slide-builder — 簡報生成器
 
-## 定位
+## 自動判斷模式
 
-把小眉導師模式的教學討論，**自動轉成可播放的 Vue 互動簡報**，存入 slide-presenter 專案。
+```
+本次對話有小眉導師教學討論？
+    ↓ 是 → Vue 模式（精裝版）
+    ↓ 否 → HTML 模式（快速版）
+```
 
 ---
 
-## 專案路徑
+## Vue 模式（精裝版）
+
+觸發情境：小眉導師模式教學完成後，說「做成簡報」「收斂成簡報」。
+輸出：Vue 組件 → 存入 slide-presenter，有測驗互動、動畫、答對才能下一頁。
+
+### 專案路徑
 
 ```
-slide-presenter 路徑：C:\Users\sun90\OneDrive\桌面\my-assistant\slide-presenter\
-簡報組件目錄：src/slides/
+slide-presenter：C:\Users\sun90\OneDrive\桌面\my-assistant\slide-presenter\
+組件目錄：src/slides/
 課程資料：src/data/courses.ts
 ```
 
----
-
-## 執行流程
+### 執行流程
 
 ```
-Step 1: 接收教學內容
-    從本次對話中的導師模式教學，萃取：
-    - 核心概念（1-3 個）
-    - 關鍵比喻或視覺化邏輯
-    - 步驟拆解
-    - 測驗題目
-    ↓
-Step 2: 設計簡報結構
-    規劃頁面順序（標準 5-7 頁）：
-    1. 歡迎頁 — 提問切入，引發好奇
-    2. 核心概念頁 — 一句話白話解釋 + 比喻
-    3. 拆解頁 — 步驟對照、視覺化
-    4. 對照表頁 — 比喻 vs 真實世界對照
-    5. 測驗頁 — 互動選擇題（答對才能前進）
-    6. 總結頁 — 重點收斂 + 完成
-    ↓
-Step 3: 產出 Vue 組件
-    建立 src/slides/{SlideId}Slide.vue
-    套用 InteractiveSlideTemplate
-    ↓
-Step 4: 更新 courses.ts
-    在 courses 陣列新增這份簡報的資訊
-    ↓
-Step 5: 更新 SlideModal.vue
-    在 slideComponents 中新增對應的 lazy import
-    ↓
-Step 6: 確認老闆審查
-    告訴老闆：「簡報建好了，請打開 http://localhost:5173/my-assistant/ 看看，哪頁有問題跟我說」
+Step 1: 從教學對話萃取核心概念（1-3 個）、比喻、步驟、測驗題
+Step 2: 規劃頁面（標準 5-7 頁）：
+        歡迎頁 → 核心概念頁 → 拆解頁 → 對照表頁 → 測驗頁 → 總結頁
+Step 3: 產出 src/slides/{SlideId}Slide.vue
+Step 4: 更新 src/data/courses.ts
+Step 5: 更新 SlideModal.vue（新增 lazy import）
+Step 6: 告知老闆：「請打開 http://localhost:5173/my-assistant/ 確認」
 ```
 
----
+### Slide ID 命名
 
-## 簡報 ID 命名規則
+格式：`{主題}-{關鍵字}`（全小寫，空格用 `-`）
+範例：`what-is-api`、`git-basics`、`vue-reactivity`
 
-```
-格式：{主題}-{關鍵字}
-範例：
-- what-is-api
-- http-methods
-- git-basics
-- vue-reactivity
-- async-await
-```
-
----
-
-## Vue 組件結構模板
+### Vue 組件模板
 
 ```vue
 <script setup lang="ts">
@@ -85,18 +61,15 @@ import type { Step, FeedbackType } from '../types/slide'
 defineProps<{ isMobile?: boolean }>()
 const emit = defineEmits<{ complete: [] }>()
 
-// 1. 定義步驟
 const steps: readonly Step[] = [
   { id: 0, view: 'welcome', title: '歡迎', desc: '...' },
   { id: 1, view: 'concept', title: '核心概念', desc: '...' },
-  // ...更多步驟
+  { id: 2, view: 'quiz', title: '測驗', desc: '...' },
+  { id: 3, view: 'summary', title: '總結', desc: '...' },
 ]
 
-// 2. 步驟狀態
 const currentStep = ref(0)
 const currentSlide = computed(() => steps[currentStep.value])
-
-// 3. 測驗狀態（如有）
 const quizAnswer = ref('')
 const feedback = ref('')
 const feedbackType = ref<FeedbackType>('neutral')
@@ -106,74 +79,51 @@ const canGoNext = computed(() => {
   return true
 })
 
-// 4. 換頁時重置測驗
 watch(() => currentSlide.value.view, () => {
   feedback.value = ''
   feedbackType.value = 'neutral'
   quizAnswer.value = ''
 })
 
-// 5. 導覽函式
 function next() { if (currentStep.value < steps.length - 1) currentStep.value++ }
 function prev() { if (currentStep.value > 0) currentStep.value-- }
 function goto(index: number) { currentStep.value = index }
-
-// 6. 測驗邏輯
 function checkAnswer(answer: string, correct: string, successMsg: string, errorMsg: string) {
   quizAnswer.value = answer
-  if (answer === correct) {
-    feedback.value = successMsg
-    feedbackType.value = 'success'
-  } else {
-    feedback.value = errorMsg
-    feedbackType.value = 'error'
-  }
+  feedbackType.value = answer === correct ? 'success' : 'error'
+  feedback.value = answer === correct ? successMsg : errorMsg
 }
 </script>
 
 <template>
   <InteractiveSlideTemplate
-    title="[主題標題]"
-    subtitle="[副標題]"
-    icon="[Emoji]"
-    :total-steps="steps.length"
-    :current-step="currentStep"
-    :step-title="currentSlide.title"
-    :step-desc="currentSlide.desc"
+    title="[主題]" subtitle="[副標]" icon="[Emoji]"
+    :total-steps="steps.length" :current-step="currentStep"
+    :step-title="currentSlide.title" :step-desc="currentSlide.desc"
     theme-color="[sky|amber|emerald|purple]"
-    :can-go-next="canGoNext"
-    :next-step-hint="!canGoNext ? '請先回答題目' : ''"
-    @prev="prev"
-    @next="next"
-    @goto="goto"
-    @complete="emit('complete')"
+    :can-go-next="canGoNext" :next-step-hint="!canGoNext ? '請先回答題目' : ''"
+    @prev="prev" @next="next" @goto="goto" @complete="emit('complete')"
   >
-    <!-- 每頁用 v-if 切換 -->
     <div v-if="currentSlide.view === 'welcome'" class="animate-fade-in">
-      <!-- 歡迎頁內容 -->
+      <!-- 歡迎頁 -->
     </div>
-
     <div v-if="currentSlide.view === 'quiz'" class="animate-fade-in">
-      <!-- 測驗頁：選項按鈕 + 回饋文字 -->
+      <!-- 測驗頁 -->
     </div>
   </InteractiveSlideTemplate>
 </template>
 ```
 
----
-
-## 主題色選擇建議
+### 主題色
 
 | 主題類型 | 顏色 |
 |---------|------|
-| 程式概念、後端 | `sky`（藍） |
-| 工具、流程 | `amber`（橘） |
-| 成功、完成類 | `emerald`（綠） |
-| 抽象概念、架構 | `purple`（紫） |
+| 程式、後端 | `sky` |
+| 工具、流程 | `amber` |
+| 成功、完成 | `emerald` |
+| 抽象、架構 | `purple` |
 
----
-
-## 更新 courses.ts 格式
+### courses.ts 格式
 
 ```typescript
 {
@@ -183,33 +133,57 @@ function checkAnswer(answer: string, correct: string, successMsg: string, errorM
   icon: '{Emoji}',
   slideId: '{slideId}',
   themeColor: '{color}',
-  tags: ['{標籤1}', '{標籤2}'],
+  tags: ['{標籤}'],
   createdAt: '{YYYY-MM-DD}',
 }
 ```
 
 ---
 
-## 更新 SlideModal.vue 格式
+## HTML 模式（快速版）
 
-在 `slideComponents` 物件中新增：
-```typescript
-'{slideId}': defineAsyncComponent(
-  () => import('../slides/{SlideId}Slide.vue')
-),
+觸發情境：「我想學 X」「X 做成簡報」「圖解 X」，沒有前置教學討論。
+輸出：獨立 `.html`，直接雙擊開瀏覽器，不需 server。
+
+### 設計原則：生活故事設計法
+
+- 不說定義，說故事（角色要有名字：小明、小美、阿強）
+- 場景要具體（飲料店、買房、辦公室）
+- 數字說人話（「每投入 100 元賺 10 元」比「10% 報酬率」好記）
+
+### 執行流程
+
 ```
+Step 1: 分析主題（核心概念、分類、生活比喻）
+Step 2: 設計頁面（封面 → 故事引入 → 核心概念 → 比較 → 應用 → 總結）
+Step 3: 產出 HTML 檔
+        命名：全小寫空格用 -（roa-roi.html、js-basics.html）
+        存檔：C:\Users\sun90\.claude\skills\slide-generator\slides\{slug}.html
+Step 4: 更新 slides/index.json（append，不覆蓋既有資料）
+Step 5: 回報：檔案路徑 + 摘要
+```
+
+### 品質標準
+
+- [ ] 每個概念有對應的生活故事
+- [ ] 角色有名字、場景有細節
+- [ ] 每頁只有一個核心重點
+- [ ] 最後一頁有一句話記憶點
 
 ---
 
-## 完成後告訴老闆
+## 完成後固定輸出
 
+**Vue 模式**：
 ```
 簡報建好了！
+- 檔案：src/slides/{SlideId}Slide.vue
+- 請打開 http://localhost:5173/my-assistant/ 點課程卡片確認
+- 哪頁有問題直接跟我說
+```
 
-- 檔案位置：src/slides/{SlideId}Slide.vue
-- 主題：{主題}
-- 共 X 頁
-
-請打開 http://localhost:5173/my-assistant/ 點擊課程卡片看看效果。
-哪一頁有問題或想加強的，直接跟我說。
+**HTML 模式**：
+```
+✅ 簡報已生成：{路徑}
+直接雙擊檔案用瀏覽器開啟
 ```

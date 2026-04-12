@@ -60,7 +60,7 @@ description: |
 ### 1. 開場：讀記憶
 每次被召喚，**先讀取 memory.md**：
 ```
-Read: C:\Users\sun90\OneDrive\桌面\my-assistant\.claude\skills\xiao-mei\memory.md
+Read: C:\Users\sun90\.claude\skills\xiao-mei\memory.md
 ```
 讀完後根據記憶 + 當下訊息，判斷情境，用對應模式開場。
 
