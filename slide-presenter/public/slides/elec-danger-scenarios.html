@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>危險情境與絕對禁止事項</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--bg4:#2d333b;
+  --border:#30363d;--border2:#3d444d;
+  --text:#e6edf3;--text2:#c9d1d9;--text3:#8b949e;
+  --blue:#58a6ff;--blue-bg:#0d1926;--blue-border:#388bfd;
+  --green:#3fb950;--green-bg:#0d2818;--green-border:#238636;
+  --red:#f85149;--red-bg:#2d1a1a;--red-border:#da3633;
+  --yellow:#e3b341;--yellow-bg:#2d2100;--yellow-border:#9e6a03;
+  --purple:#d2a8ff;--purple-bg:#1a1030;--purple-border:#8957e5;
+  --orange:#ffa657;
+}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.h-left{display:flex;align-items:center;gap:12px}
+.h-badge{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.05em}
+.h-title{font-size:16px;font-weight:700}
+.h-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.h-right{display:flex;align-items:center;gap:14px}
+.progress-bar{width:180px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--orange));border-radius:2px;transition:width 0.4s cubic-bezier(.4,0,.2,1)}
+.page-num{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;min-width:48px;text-align:right}
+.dots{display:flex;gap:4px;align-items:center}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--border2);transition:all 0.3s}
+.dot.active{background:var(--red);width:16px;border-radius:3px}
+.dot.done{background:var(--red);opacity:0.4}
+.main{flex:1;overflow:hidden;position:relative}
+.slide{position:absolute;inset:0;padding:1.75rem 3rem;display:flex;flex-direction:column;gap:1rem;opacity:0;transform:translateX(40px);transition:all 0.35s cubic-bezier(.4,0,.2,1);pointer-events:none;overflow-y:auto}
+.slide.active{opacity:1;transform:translateX(0);pointer-events:all}
+.slide.exit-left{opacity:0;transform:translateX(-40px)}
+.slide::-webkit-scrollbar{width:4px}
+.slide::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.footer{background:var(--bg2);border-top:1px solid var(--border);padding:0 3rem;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.btn{padding:8px 24px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s}
+.btn-prev{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+.btn-prev:hover:not(:disabled){background:var(--border);color:var(--text)}
+.btn-next{background:var(--red-border);color:#fff}
+.btn-next:hover:not(:disabled){background:#b91c1c}
+.btn:disabled{opacity:0.3;cursor:not-allowed}
+.slide-title{font-size:26px;font-weight:700;line-height:1.2}
+.slide-sub{font-size:14px;color:var(--text3);margin-top:-0.5rem}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.box{border-radius:10px;padding:1rem 1.25rem}
+.box-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.box-text{font-size:14px;line-height:1.7}
+.life-box{background:var(--green-bg);border:1px solid var(--green-border)}
+.life-box .box-label{color:var(--green)}.life-box .box-text{color:#aff5b4}
+.trap-box{background:var(--red-bg);border:1px solid var(--red-border)}
+.trap-box .box-label{color:var(--red)}.trap-box .box-text{color:#ffa198}
+.info-box{background:var(--blue-bg);border:1px solid var(--blue-border)}
+.info-box .box-label{color:var(--blue)}.info-box .box-text{color:#a5c8ff}
+.tip-box{background:var(--yellow-bg);border:1px solid var(--yellow-border)}
+.tip-box .box-label{color:var(--yellow)}.tip-box .box-text{color:#f0c96e}
+.code-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.code-header{background:var(--bg3);padding:8px 14px;font-size:12px;color:var(--text3);display:flex;justify-content:space-between;border-bottom:1px solid var(--border)}
+.code-body{padding:1rem 1.25rem;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text2);white-space:pre;line-height:1.9;overflow-x:auto}
+.quiz-wrap{background:var(--bg2);border:1px solid var(--purple-border);border-radius:12px;padding:1.25rem}
+.quiz-q{font-size:15px;font-weight:500;margin-bottom:1rem;line-height:1.6}
+.quiz-opts{display:flex;flex-direction:column;gap:8px}
+.quiz-opt{background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text2);cursor:pointer;text-align:left;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s}
+.quiz-opt:hover:not([disabled]){border-color:var(--purple);color:var(--text)}
+.quiz-opt.correct{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.quiz-opt.wrong{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.quiz-feedback{font-size:13px;margin-top:10px;padding:10px 14px;border-radius:8px;display:none;line-height:1.6}
+.quiz-feedback.ok{background:var(--green-bg);color:#aff5b4;border:1px solid var(--green-border)}
+.quiz-feedback.ng{background:var(--red-bg);color:#ffa198;border:1px solid var(--red-border)}
+/* danger level badge */
+.danger-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 10px;border-radius:10px;letter-spacing:.05em}
+.danger-extreme{background:rgba(248,81,73,0.2);color:#f85149;border:1px solid #da3633}
+.danger-high{background:rgba(255,166,87,0.2);color:#ffa657;border:1px solid #e07a2a}
+/* scenario card */
+.scenario{background:var(--bg2);border:1px solid var(--red-border);border-radius:12px;padding:1.25rem}
+.scenario-title{font-size:15px;font-weight:700;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.scenario-body{font-size:13px;color:var(--text2);line-height:1.8}
+/* prohibition list */
+.prohib-item{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--border)}
+.prohib-item:last-child{border-bottom:none}
+.prohib-num{width:28px;height:28px;border-radius:50%;background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.prohib-content{}
+.prohib-action{font-size:14px;font-weight:700;color:var(--red);margin-bottom:4px}
+.prohib-consequence{font-size:13px;color:var(--text2);line-height:1.6}
+.prohib-trap{font-size:12px;color:var(--orange);margin-top:4px}
+/* measure row */
+.measure-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
+.measure-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--blue);min-width:120px}
+.measure-normal{font-size:12px;color:var(--green);flex:1}
+.measure-abnormal{font-size:12px;color:var(--red);flex:1.5}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="h-left">
+    <div class="h-badge">⚡ ELEC-03</div>
+    <div>
+      <div class="h-title">危險情境與現場實務</div>
+      <div class="h-sub">N/PE 混接、絕對禁止事項、現場量測判斷</div>
+    </div>
+  </div>
+  <div class="h-right">
+    <div class="dots" id="dots"></div>
+    <div class="progress-bar"><div class="progress-fill" id="pfill"></div></div>
+    <div class="page-num" id="pnum">1 / 7</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- P1 封面 -->
+<div class="slide active" id="s0">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:1.5rem">
+    <div style="font-size:56px">☠️</div>
+    <div>
+      <div style="font-size:36px;font-weight:700">危險情境與現場實務</div>
+      <div style="font-size:20px;color:var(--red);margin-top:6px">N/PE Mixing · Field Safety · Prohibition List</div>
+    </div>
+    <div style="font-size:15px;color:var(--text3);max-width:520px;line-height:1.8">
+      混接不會當場爆炸。設備還能動，看起來沒事。<br>
+      <span style="color:var(--red)">這才是最可怕的地方——危險狀態可能持續數年，直到有人觸電。</span>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <span class="danger-badge danger-extreme">N/PE 混接</span>
+      <span class="danger-badge danger-extreme">RCBO 失效</span>
+      <span class="danger-badge danger-extreme">外殼帶電</span>
+      <span style="background:var(--bg2);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--text3)">現場量測</span>
+      <span style="background:var(--bg2);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--text3)">5 大禁止事項</span>
+    </div>
+  </div>
+</div>
+
+<!-- P2 為何混接如此危險 -->
+<div class="slide" id="s1">
+  <div class="slide-title">💀 混接的核心危險：三重致命</div>
+  <div class="slide-sub">了解這三層，你才能理解為何混接比直接短路還危險</div>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="background:rgba(248,81,73,0.08);border:1px solid var(--red-border);border-radius:10px;padding:1rem 1.25rem">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">1</span>
+        <span style="font-size:15px;font-weight:700;color:var(--red)">外殼帶電 — 看不見的殺手</span>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8">
+        PE 正常狀態電流 = 0。混接後 PE 上有完整回路電流（幾安培）。
+        PE 接著設備金屬外殼 → <strong>所有外殼帶電</strong>。
+        同一條 PE 匯流排串起的：電腦機箱、鐵製桌腳、水管、鐵門——全部帶電。
+        人碰到任何一個金屬面 → 觸電。
+      </div>
+    </div>
+
+    <div style="background:rgba(248,81,73,0.08);border:1px solid var(--red-border);border-radius:10px;padding:1rem 1.25rem">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">2</span>
+        <span style="font-size:15px;font-weight:700;color:var(--red)">RCBO 保護完全失效</span>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8">
+        RCBO 的邏輯：量 L 電流進去多少，N 電流回來多少，差值 = 漏電量。
+        混接後 PE 當 N 用 → L 電流進去多少，PE（當 N）電流回來多少。差值 = 0。
+        RCBO <strong>永遠偵測不到異常，永遠不會跳脫</strong>。
+      </div>
+    </div>
+
+    <div style="background:rgba(248,81,73,0.08);border:1px solid var(--red-border);border-radius:10px;padding:1rem 1.25rem">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">3</span>
+        <span style="font-size:15px;font-weight:700;color:var(--red)">危險狀態長期持續 — 最可怕</span>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8">
+        設備能正常運作 → 沒有人去查 → 趕工的師傅走了、工地驗收通過了。
+        危險狀態可能安靜持續 <strong>數個月到數年</strong>，直到有人碰了外殼才爆發。
+        這才是混接比短路更危險的原因：短路會立刻跳電，混接不會。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P3 三種混接情境 -->
+<div class="slide" id="s2">
+  <div class="slide-title">🔍 三種常見混接情境</div>
+  <div class="slide-sub">每種情境都真實發生過，都有人因此死亡</div>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div class="scenario">
+      <div class="scenario-title">
+        <span class="danger-badge danger-extreme">極危險</span>
+        情境一：直接拿 PE 當 N 回路用
+      </div>
+      <div class="scenario-body">
+        <strong>做法：</strong>把 PE 線接到原本應該接 N 線的位置<br>
+        <strong>電流路徑：</strong>L → 負載 → PE 導線 → 接地棒 → 大地 → 台電接地棒 → 中性點 → 回電源<br>
+        <strong>結果：</strong>PE 上有完整電流 → 所有外殼帶電 → RCBO 差值 = 0 → 不跳脫<br>
+        <span style="color:var(--red)">設備能動，外殼帶電，RCBO 失效，隨時出人命</span>
+      </div>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-title">
+        <span class="danger-badge danger-extreme">極危險</span>
+        情境二：N 線斷了，用 PE 跳接補（最常見！）
+      </div>
+      <div class="scenario-body">
+        <strong>場景：</strong>施工趕工，N 線某處斷掉，師傅拿一條線把 N 斷點接到 PE 匯流排<br>
+        <strong>為何設備還能動：</strong>電流找到了另一條路（PE → 大地）<br>
+        <strong>三層危險：</strong>
+        外殼帶電（PE 有電流）+ RCBO 失效（差值 = 0）+ 長期持續（設備能動沒人查）<br>
+        <span style="color:var(--red)">正確做法：找到 N 線斷點，重新接好或換新線。PE 只接外殼。</span>
+      </div>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-title">
+        <span class="danger-badge danger-extreme">極危險</span>
+        情境三：末端把 N 和 PE 短路接在一起
+      </div>
+      <div class="scenario-body">
+        <strong>做法：</strong>在插座或設備端，把 N 和 PE 端子直接短接<br>
+        <strong>結果：</strong>N 線電流流進 PE → 外殼帶電 + RCBO 失效<br>
+        <span style="color:var(--red)">違反 CNS 和 IEC 60364，任何理由都不可接受</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P4 TN-C-S 合法接法 -->
+<div class="slide" id="s3">
+  <div class="slide-title">✅ 什麼叫「合法的 N/PE 合一」？</div>
+  <div class="slide-sub">TN-C-S 系統 — 電源側合一合法，末端分開是鐵律</div>
+
+  <div class="grid-2">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px">TN-C-S 系統定義</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:12px">
+        從電源到進戶主配電盤（MDB）這段，N 線和 PE 線合為一條「<span style="color:var(--yellow)">PEN 線</span>」。
+        進入建築後，在 MDB <strong>強制分離</strong>成獨立 N 線和 PE 線。分離後永不再合接。
+      </div>
+
+      <div class="life-box box">
+        <div class="box-label">✅ 合法條件（缺一不可）</div>
+        <div class="box-text">
+          • PEN 線截面積 ≥ 10mm²（銅）<br>
+          • 分離只在 MDB 做，只做一次<br>
+          • 分離後 N/PE 用不同顏色標示<br>
+          • 末端設備 N 和 PE 永不短路<br>
+          • 符合 CNS 及 IEC 60364
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr>
+            <th style="background:var(--bg3);padding:8px 12px;text-align:left;border:1px solid var(--border);color:var(--text3)">比較</th>
+            <th style="background:var(--green-bg);padding:8px 12px;text-align:left;border:1px solid var(--border);color:var(--green)">TN-C-S 合法</th>
+            <th style="background:var(--red-bg);padding:8px 12px;text-align:left;border:1px solid var(--border);color:var(--red)">末端混接（違規）</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="border:1px solid var(--border);padding:8px 12px">位置</td><td style="border:1px solid var(--border);padding:8px 12px;color:#aff5b4">電源到 MDB（電源側）</td><td style="border:1px solid var(--border);padding:8px 12px;color:#ffa198">末端插座或設備（負載側）</td></tr>
+          <tr style="background:var(--bg2)"><td style="border:1px solid var(--border);padding:8px 12px">目的</td><td style="border:1px solid var(--border);padding:8px 12px;color:#aff5b4">系統設計節省線材</td><td style="border:1px solid var(--border);padding:8px 12px;color:#ffa198">趕工省事</td></tr>
+          <tr><td style="border:1px solid var(--border);padding:8px 12px">分離</td><td style="border:1px solid var(--border);padding:8px 12px;color:#aff5b4">MDB 後嚴格分離</td><td style="border:1px solid var(--border);padding:8px 12px;color:#ffa198">永遠混在一起</td></tr>
+          <tr style="background:var(--bg2)"><td style="border:1px solid var(--border);padding:8px 12px">安全性</td><td style="border:1px solid var(--border);padding:8px 12px;color:#aff5b4">符合規範，安全</td><td style="border:1px solid var(--border);padding:8px 12px;color:#ffa198">外殼帶電，致命</td></tr>
+        </tbody>
+      </table>
+
+      <div class="tip-box box" style="margin-top:10px">
+        <div class="box-label">🎯 一句話記住</div>
+        <div class="box-text">電源側合一（節省線材）→ 合法。負載側合一（偷懶趕工）→ 犯罪。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P5 現場量測判斷 -->
+<div class="slide" id="s4">
+  <div class="slide-title">🔧 現場量測與判斷</div>
+  <div class="slide-sub">帶著三用電錶和鉗型電流表，這五個量測告訴你現場安不安全</div>
+
+  <div style="margin-bottom:12px">
+    <div class="measure-row">
+      <div class="measure-name">L 線對地</div>
+      <div class="measure-normal">✅ 127V 或 220V</div>
+      <div class="measure-abnormal">⚠️ 電壓偏低 → 線路問題</div>
+    </div>
+    <div class="measure-row">
+      <div class="measure-name">N 線對地</div>
+      <div class="measure-normal">✅ 0～3V</div>
+      <div class="measure-abnormal">🚨 超過 5V → 中性偏移，查三相不平衡或 N 線阻抗過高</div>
+    </div>
+    <div class="measure-row">
+      <div class="measure-name">PE 對地</div>
+      <div class="measure-normal">✅ 0V</div>
+      <div class="measure-abnormal">🚨 有電壓 → 可能漏電或 N/PE 混接</div>
+    </div>
+    <div class="measure-row" style="border:1px solid var(--red-border);background:var(--red-bg)">
+      <div class="measure-name" style="color:var(--red)">PE 上電流 ⚡</div>
+      <div class="measure-normal">✅ 0A</div>
+      <div class="measure-abnormal" style="color:var(--red);font-weight:700">🚨 有電流 → 有漏電或 N/PE 混接，立即停機！</div>
+    </div>
+    <div class="measure-row">
+      <div class="measure-name">L 和 N 電流差</div>
+      <div class="measure-normal">✅ 差值 &lt; 30mA</div>
+      <div class="measure-abnormal">🚨 超過 30mA → RCBO 應跳，若沒跳 → RCBO 故障</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">顏色識別（台灣 CNS 規範）</div>
+      <div style="font-size:13px;color:var(--text2);line-height:2">
+        <span style="color:#f85149">●</span> 紅色 → R 相火線<br>
+        <span style="color:#888">●</span> 黑色 → S 相火線<br>
+        <span style="color:#58a6ff">●</span> 藍色 → T 相火線 / 單相火線<br>
+        <span style="color:#ddd">●</span> 白色 / 灰色 → 中性線 N<br>
+        <span style="color:#3fb950">●</span> 綠色 / 黃綠 → 地線 PE
+      </div>
+    </div>
+    <div class="trap-box box">
+      <div class="box-label">⚡ 發現違規接法的處理流程</div>
+      <div class="box-text">
+        <strong>1. 立即停機</strong>（不是只記錄）<br>
+        <strong>2. 量 PE 電流</strong>（有電流 = 混接或漏電）<br>
+        <strong>3. 找 N 線斷點</strong><br>
+        <strong>4. 重新拉 N 線</strong>（不是把 PE 改粗）<br>
+        <strong>5. 不可妥協</strong>（趕工不是理由）
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P6 絕對禁止5件事 -->
+<div class="slide" id="s5">
+  <div class="slide-title">🚫 絕對禁止的 5 件事</div>
+  <div class="slide-sub">這五件事不管什麼理由都不能做，每一件都是在埋沒有倒數計時的炸彈</div>
+
+  <div style="background:var(--bg2);border:1px solid var(--red-border);border-radius:12px;padding:1.25rem">
+    <div class="prohib-item">
+      <div class="prohib-num">1</div>
+      <div class="prohib-content">
+        <div class="prohib-action">PE 當 N 回路用</div>
+        <div class="prohib-consequence">PE 有電流 → 所有外殼帶電 → RCBO 失效 → 人碰觸電</div>
+        <div class="prohib-trap">陷阱：設備能動，看起來正常，但隨時可能出人命</div>
+      </div>
+    </div>
+    <div class="prohib-item">
+      <div class="prohib-num">2</div>
+      <div class="prohib-content">
+        <div class="prohib-action">N 線斷了用 PE 跳接補</div>
+        <div class="prohib-consequence">同上，且因設備能動，危險可能持續數年無人發現</div>
+        <div class="prohib-trap">最常見的趕工惡習，最危險的隱患</div>
+      </div>
+    </div>
+    <div class="prohib-item">
+      <div class="prohib-num">3</div>
+      <div class="prohib-content">
+        <div class="prohib-action">末端把 N 和 PE 短路接在一起</div>
+        <div class="prohib-consequence">N 上電流流進 PE → 外殼帶電 + RCBO 失效</div>
+        <div class="prohib-trap">違反 CNS 和 IEC，任何理由都不可接受</div>
+      </div>
+    </div>
+    <div class="prohib-item">
+      <div class="prohib-num">4</div>
+      <div class="prohib-content">
+        <div class="prohib-action">打接地棒自造 N 線</div>
+        <div class="prohib-consequence">大地阻抗 10～100Ω，三相不平衡時電壓漂移，設備燒毀</div>
+        <div class="prohib-trap">「感覺上 0V 所以可以當 N」— 這是錯誤認知</div>
+      </div>
+    </div>
+    <div class="prohib-item" style="border-bottom:none">
+      <div class="prohib-num">5</div>
+      <div class="prohib-content">
+        <div class="prohib-action">以為 N 線 0V 就可以亂摸</div>
+        <div class="prohib-consequence">N 線電壓 0V 但有完整回路電流，30mA 就能造成心室纖維顫動</div>
+        <div class="prohib-trap">電壓不是危險的，電流才是。0V ≠ 安全。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- P7 小測驗 -->
+<div class="slide" id="s6">
+  <div class="slide-title">🧪 危險情境測驗</div>
+  <div class="slide-sub">這些題目來自真實事故，搞懂了才是真的懂</div>
+
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="quiz-wrap" id="q1">
+      <div class="quiz-q">Q1：N 線斷了，師傅拿一條線把 N 斷點接到 PE 匯流排。設備恢復正常運作，這樣可以收工了嗎？</div>
+      <div class="quiz-opts">
+        <button class="quiz-opt" onclick="ans(this,'q1',false)">A. 可以，設備能動就沒問題</button>
+        <button class="quiz-opt" onclick="ans(this,'q1',true)">B. 不行，這是最危險的混接，PE 帶電 + RCBO 失效，必須立刻修正 N 線</button>
+        <button class="quiz-opt" onclick="ans(this,'q1',false)">C. 暫時可以，等有空再修</button>
+      </div>
+      <div class="quiz-feedback" id="q1-fb"></div>
+    </div>
+
+    <div class="quiz-wrap" id="q2">
+      <div class="quiz-q">Q2：現場量測 PE 線上有 3A 電流，這代表什麼？</div>
+      <div class="quiz-opts">
+        <button class="quiz-opt" onclick="ans(this,'q2',false)">A. 正常，PE 本來就有接地電流</button>
+        <button class="quiz-opt" onclick="ans(this,'q2',true)">B. 異常！PE 上有電流代表有漏電或 N/PE 混接，必須立即停機調查</button>
+        <button class="quiz-opt" onclick="ans(this,'q2',false)">C. 只要不超過 30mA 就沒事</button>
+      </div>
+      <div class="quiz-feedback" id="q2-fb"></div>
+    </div>
+
+    <div class="quiz-wrap" id="q3">
+      <div class="quiz-q">Q3：為什麼 N/PE 混接後，RCBO 保護會完全失效？</div>
+      <div class="quiz-opts">
+        <button class="quiz-opt" onclick="ans(this,'q3',false)">A. 因為電流太大，燒掉了 RCBO</button>
+        <button class="quiz-opt" onclick="ans(this,'q3',true)">B. RCBO 量 L 電流進去多少，PE（當 N 用）電流回來多少，差值 = 0，偵測不到異常</button>
+        <button class="quiz-opt" onclick="ans(this,'q3',false)">C. RCBO 只保護漏電，不保護混接</button>
+      </div>
+      <div class="quiz-feedback" id="q3-fb"></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <button class="btn btn-prev" id="bprev" onclick="go(-1)" disabled>← 上一頁</button>
+  <div style="font-size:12px;color:var(--text4)">⚡ 危險情境與現場實務 · ELEC-03</div>
+  <button class="btn btn-next" id="bnext" onclick="go(1)">下一頁 →</button>
+</div>
+
+<script>
+const TOTAL=7;let cur=0;
+const A={
+  q1:{correct:'B',explain:'這是最典型的 N/PE 混接。設備能動是因為電流找到了 PE → 大地這條路，但 PE 上現在有電流，所有外殼帶電，RCBO 差值 = 0 永遠不跳脫，危險狀態可能持續數年。必須找到 N 線斷點重新接好。'},
+  q2:{correct:'B',explain:'PE 正常狀態電流 = 0A，這是鐵律。PE 上有任何電流（哪怕 0.1A）都代表有漏電或 N/PE 混接，是現場最重要的危險警示信號。量到 PE 有電流 = 立即停機，不是等下次保養時再看。'},
+  q3:{correct:'B',explain:'RCBO 的工作原理是比較 L 線電流和 N 線回流電流的差值，差值 ≥ 30mA 才跳脫。混接後 PE 充當了 N 線，L 電流進去多少，PE 電流就回來多少，差值永遠 = 0，RCBO 完全看不出問題。這就是為什麼混接比直接漏電更危險。'}
+};
+function render(){
+  document.querySelectorAll('.slide').forEach(s=>s.classList.remove('active','exit-left'));
+  document.getElementById('s'+cur).classList.add('active');
+  document.getElementById('pfill').style.width=Math.round(cur/(TOTAL-1)*100)+'%';
+  document.getElementById('pnum').textContent=(cur+1)+' / '+TOTAL;
+  document.getElementById('bprev').disabled=cur===0;
+  document.getElementById('bnext').disabled=cur===TOTAL-1;
+  const d=document.getElementById('dots');d.innerHTML='';
+  for(let i=0;i<TOTAL;i++){const x=document.createElement('div');x.className='dot'+(i===cur?' active':i<cur?' done':'');d.appendChild(x);}
+}
+function go(dir){const p=cur;cur=Math.max(0,Math.min(TOTAL-1,cur+dir));if(cur!==p){document.getElementById('s'+p).classList.add('exit-left');setTimeout(()=>document.getElementById('s'+p).classList.remove('exit-left'),350);render();}}
+function ans(btn,qid,ok){
+  const w=document.getElementById(qid);
+  w.querySelectorAll('.quiz-opt').forEach(o=>o.disabled=true);
+  btn.classList.add(ok?'correct':'wrong');
+  if(!ok)w.querySelectorAll('.quiz-opt').forEach(o=>{if(o.textContent.trim().startsWith(A[qid].correct))o.classList.add('correct');});
+  const fb=document.getElementById(qid+'-fb');
+  fb.className='quiz-feedback '+(ok?'ok':'ng');
+  fb.style.display='block';
+  fb.textContent=(ok?'✅ 正確！':'❌ 錯了。')+' '+A[qid].explain;
+}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')go(1);if(e.key==='ArrowLeft')go(-1);});
+render();
+</script>
+</body>
+</html>

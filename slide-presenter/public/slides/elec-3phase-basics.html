@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三相配電基礎</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--bg4:#2d333b;
+  --border:#30363d;--border2:#3d444d;
+  --text:#e6edf3;--text2:#c9d1d9;--text3:#8b949e;--text4:#6e7681;
+  --blue:#58a6ff;--blue-bg:#0d1926;--blue-border:#388bfd;
+  --green:#3fb950;--green-bg:#0d2818;--green-border:#238636;
+  --red:#f85149;--red-bg:#2d1a1a;--red-border:#da3633;
+  --yellow:#e3b341;--yellow-bg:#2d2100;--yellow-border:#9e6a03;
+  --purple:#d2a8ff;--purple-bg:#1a1030;--purple-border:#8957e5;
+  --orange:#ffa657;
+}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.h-left{display:flex;align-items:center;gap:12px}
+.h-badge{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.05em}
+.h-title{font-size:16px;font-weight:700;color:var(--text)}
+.h-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.h-right{display:flex;align-items:center;gap:14px}
+.progress-bar{width:180px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:2px;transition:width 0.4s cubic-bezier(.4,0,.2,1)}
+.page-num{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;min-width:48px;text-align:right}
+.dots{display:flex;gap:4px;align-items:center}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--border2);transition:all 0.3s}
+.dot.active{background:var(--green);width:16px;border-radius:3px}
+.dot.done{background:var(--green);opacity:0.4}
+.main{flex:1;overflow:hidden;position:relative}
+.slide{position:absolute;inset:0;padding:1.75rem 3rem;display:flex;flex-direction:column;gap:1rem;opacity:0;transform:translateX(40px);transition:all 0.35s cubic-bezier(.4,0,.2,1);pointer-events:none;overflow-y:auto}
+.slide.active{opacity:1;transform:translateX(0);pointer-events:all}
+.slide.exit-left{opacity:0;transform:translateX(-40px)}
+.slide::-webkit-scrollbar{width:4px}
+.slide::-webkit-scrollbar-track{background:transparent}
+.slide::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.footer{background:var(--bg2);border-top:1px solid var(--border);padding:0 3rem;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.btn{padding:8px 24px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s}
+.btn-prev{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+.btn-prev:hover:not(:disabled){background:var(--border);color:var(--text)}
+.btn-next{background:var(--green-border);color:#fff}
+.btn-next:hover:not(:disabled){background:#2ea043}
+.btn:disabled{opacity:0.3;cursor:not-allowed}
+.slide-title{font-size:26px;font-weight:700;color:var(--text);line-height:1.2}
+.slide-title-sm{font-size:20px;font-weight:700;color:var(--text)}
+.slide-sub{font-size:14px;color:var(--text3);margin-top:-0.5rem}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.box{border-radius:10px;padding:1rem 1.25rem}
+.box-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.box-text{font-size:14px;line-height:1.7}
+.life-box{background:var(--green-bg);border:1px solid var(--green-border)}
+.life-box .box-label{color:var(--green)}
+.life-box .box-text{color:#aff5b4}
+.trap-box{background:var(--red-bg);border:1px solid var(--red-border)}
+.trap-box .box-label{color:var(--red)}
+.trap-box .box-text{color:#ffa198}
+.info-box{background:var(--blue-bg);border:1px solid var(--blue-border)}
+.info-box .box-label{color:var(--blue)}
+.info-box .box-text{color:#a5c8ff}
+.tip-box{background:var(--yellow-bg);border:1px solid var(--yellow-border)}
+.tip-box .box-label{color:var(--yellow)}
+.tip-box .box-text{color:#f0c96e}
+.purple-box{background:var(--purple-bg);border:1px solid var(--purple-border)}
+.purple-box .box-label{color:var(--purple)}
+.purple-box .box-text{color:#e2ccff}
+.code-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.code-header{background:var(--bg3);padding:8px 14px;font-size:12px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.code-body{padding:1rem 1.25rem;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text2);white-space:pre;line-height:1.9;overflow-x:auto}
+.hl{color:var(--orange);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-g{color:var(--green);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-b{color:var(--blue);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-p{color:var(--purple);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-r{color:var(--red);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-y{color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:13px}
+.quiz-wrap{background:var(--bg2);border:1px solid var(--purple-border);border-radius:12px;padding:1.5rem}
+.quiz-q{font-size:15px;font-weight:500;color:var(--text);margin-bottom:1rem;line-height:1.6}
+.quiz-opts{display:flex;flex-direction:column;gap:8px;margin-top:1rem}
+.quiz-opt{background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:11px 16px;font-size:14px;color:var(--text2);cursor:pointer;text-align:left;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s}
+.quiz-opt:hover:not([disabled]){border-color:var(--purple);color:var(--text)}
+.quiz-opt.correct{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.quiz-opt.wrong{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.quiz-feedback{font-size:13px;margin-top:12px;padding:10px 14px;border-radius:8px;display:none;line-height:1.6}
+.quiz-feedback.ok{background:var(--green-bg);color:#aff5b4;border:1px solid var(--green-border)}
+.quiz-feedback.ng{background:var(--red-bg);color:#ffa198;border:1px solid var(--red-border)}
+/* wire card */
+.wire-card{border-radius:12px;padding:1.25rem;display:flex;flex-direction:column;gap:10px}
+.wire-l{background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.4)}
+.wire-n{background:rgba(232,179,65,0.08);border:1px solid rgba(232,179,65,0.35)}
+.wire-pe{background:rgba(63,185,80,0.08);border:1px solid rgba(63,185,80,0.35)}
+.wire-name{font-size:18px;font-weight:700;margin-bottom:4px}
+.wire-name.l{color:#f85149}
+.wire-name.n{color:#e3b341}
+.wire-name.pe{color:#3fb950}
+.wire-row{display:flex;justify-content:space-between;align-items:flex-start;font-size:13px;line-height:1.6;gap:8px}
+.wire-key{color:var(--text3);min-width:56px}
+.wire-val{color:var(--text2);flex:1;text-align:right}
+/* compare table */
+.cmp-table{width:100%;border-collapse:collapse}
+.cmp-table th{background:var(--bg3);padding:9px 14px;font-size:12px;color:var(--text3);text-align:left;border:1px solid var(--border)}
+.cmp-table td{padding:9px 14px;font-size:13px;border:1px solid var(--border);vertical-align:top;line-height:1.6}
+.cmp-table tr:nth-child(even) td{background:var(--bg2)}
+/* voltage spec */
+.spec-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem}
+.spec-badge{font-size:10px;font-weight:700;letter-spacing:.08em;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:8px}
+.spec-v{font-size:28px;font-weight:700;line-height:1}
+.spec-desc{font-size:12px;color:var(--text3);margin-top:4px;line-height:1.5}
+/* wave viz */
+.wave-container{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem;overflow:hidden}
+.wave-label{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="h-left">
+    <div class="h-badge">⚡ ELEC-01</div>
+    <div>
+      <div class="h-title">三相配電基礎</div>
+      <div class="h-sub">從三條線的角色，到台灣電壓規格完整解析</div>
+    </div>
+  </div>
+  <div class="h-right">
+    <div class="dots" id="dots"></div>
+    <div class="progress-bar"><div class="progress-fill" id="pfill"></div></div>
+    <div class="page-num" id="pnum">1 / 8</div>
+  </div>
+</div>
+
+<div class="main" id="main">
+
+<!-- ══════════════════════════════ P1 封面 ══════════════════════════════ -->
+<div class="slide active" id="s0">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:1.5rem">
+    <div style="font-size:56px">⚡</div>
+    <div>
+      <div style="font-size:36px;font-weight:700;line-height:1.2">三相配電基礎</div>
+      <div style="font-size:20px;color:var(--green);margin-top:6px">Three-Phase Power Distribution</div>
+    </div>
+    <div style="font-size:15px;color:var(--text3);max-width:480px;line-height:1.8">
+      為什麼插座有三個孔？<br>
+      為什麼工廠用的電跟家裡不一樣？<br>
+      <span style="color:var(--yellow)">搞懂三相配電，就搞懂了電力系統的地基。</span>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:0.5rem">
+      <span style="background:rgba(248,81,73,0.12);border:1px solid rgba(248,81,73,0.4);padding:6px 14px;border-radius:20px;font-size:12px;color:#f85149">🔴 火線 L</span>
+      <span style="background:rgba(232,179,65,0.10);border:1px solid rgba(232,179,65,0.35);padding:6px 14px;border-radius:20px;font-size:12px;color:#e3b341">⚪ 中性線 N</span>
+      <span style="background:rgba(63,185,80,0.08);border:1px solid rgba(63,185,80,0.35);padding:6px 14px;border-radius:20px;font-size:12px;color:#3fb950">🟢 地線 PE</span>
+      <span style="background:var(--bg2);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--text3)">3P3W vs 3P4W</span>
+      <span style="background:var(--bg2);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--text3)">台灣電壓規格</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P2 三主角總覽 ══════════════════════════════ -->
+<div class="slide" id="s1">
+  <div class="slide-title">⚡ 電的三個主角</div>
+  <div class="slide-sub">每條線有不同角色，不能互換，搞混就會出人命</div>
+
+  <div class="grid-3" style="flex:1">
+    <div class="wire-card wire-l">
+      <div class="wire-name l">🔴 火線 L</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Line / Live Wire</div>
+      <div class="wire-row"><span class="wire-key">角色</span><span class="wire-val" style="color:#ffa198">送電出發，電力的去程</span></div>
+      <div class="wire-row"><span class="wire-key">電壓</span><span class="wire-val">對地 127V 或 220V</span></div>
+      <div class="wire-row"><span class="wire-key">電流</span><span class="wire-val">正常負載電流（幾～幾十 A）</span></div>
+      <div class="wire-row"><span class="wire-key">危險</span><span class="wire-val" style="color:#f85149">有電壓有電流，直接觸電</span></div>
+      <div style="margin-top:10px;padding:8px;background:rgba(248,81,73,0.1);border-radius:6px;font-size:12px;color:#ffa198">
+        🎯 記憶法：送貨員 — 帶著貨（電力）從倉庫出發送到你家
+      </div>
+    </div>
+
+    <div class="wire-card wire-n">
+      <div class="wire-name n">⚪ 中性線 N</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Neutral Wire</div>
+      <div class="wire-row"><span class="wire-key">角色</span><span class="wire-val" style="color:#f0c96e">電流回程路，電力的回程</span></div>
+      <div class="wire-row"><span class="wire-key">電壓</span><span class="wire-val">對地 ≈ 0V（有偏移）</span></div>
+      <div class="wire-row"><span class="wire-key">電流</span><span class="wire-val">與火線相同大小</span></div>
+      <div class="wire-row"><span class="wire-key">危險</span><span class="wire-val" style="color:#e3b341">電壓 0V 但有電流，碰觸仍觸電！</span></div>
+      <div style="margin-top:10px;padding:8px;background:rgba(232,179,65,0.1);border-radius:6px;font-size:12px;color:#f0c96e">
+        ⚠️ 核心認知：<strong>0V ≠ 安全</strong>，殺人的是電流不是電壓（30mA 致命）
+      </div>
+    </div>
+
+    <div class="wire-card wire-pe">
+      <div class="wire-name pe">🟢 地線 PE</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Protective Earth</div>
+      <div class="wire-row"><span class="wire-key">角色</span><span class="wire-val" style="color:#aff5b4">漏電逃生路，保護人員</span></div>
+      <div class="wire-row"><span class="wire-key">電壓</span><span class="wire-val">對地 = 0V</span></div>
+      <div class="wire-row"><span class="wire-key">電流</span><span class="wire-val" style="color:#3fb950">正常狀態 = 0A</span></div>
+      <div class="wire-row"><span class="wire-key">危險</span><span class="wire-val">正常可安全碰觸</span></div>
+      <div style="margin-top:10px;padding:8px;background:rgba(63,185,80,0.08);border-radius:6px;font-size:12px;color:#aff5b4">
+        🛡️ 記憶法：消防逃生門 — 平常鎖著沒人走，緊急時（漏電）開門救人
+      </div>
+    </div>
+  </div>
+
+  <div class="tip-box box">
+    <div class="box-label">🔑 一句話記住三者差異</div>
+    <div class="box-text">L 是電出發的路，N 是電回家的路，PE 是電跑錯地方時的逃生門。<span style="color:var(--red)">N 和 PE 都是 0V，但 N 有電流，絕對不能混用。</span></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P3 N線：為何0V還會電死人 ══════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="slide-title">⚠️ N線：電壓 0V 為何還能電死人？</div>
+  <div class="slide-sub">最容易誤會的觀念，搞懂這個你就比 80% 的人強</div>
+
+  <div class="grid-2">
+    <div class="trap-box box">
+      <div class="box-label">❌ 常見誤解</div>
+      <div class="box-text">
+        「N 線電壓是 0V，沒有電壓就沒有危險，可以直接摸」<br><br>
+        → <strong>這個觀念完全錯誤，每年有人因此死亡。</strong>
+      </div>
+    </div>
+    <div class="life-box box">
+      <div class="box-label">✅ 正確理解</div>
+      <div class="box-text">
+        電壓是「壓力」，電流才是「流量」。<br>
+        殺人的是流過心臟的電流，不是電壓本身。<br><br>
+        <strong>N 線電壓 0V，但電流跟 L 線一樣大。</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span>閉合迴路 — 電流的完整路徑</span></div>
+    <div class="code-body"><span style="color:var(--red)">電源（變壓器）</span>
+  ↓ <span style="color:var(--red)">火線 L（電流出發，帶著電壓）</span>
+  → 你家插座 → 電器（在此做功，產生熱/光/動力）
+  ↓ <span style="color:var(--yellow)">中性線 N（電流回程，電壓幾乎 0V，但電流依然存在！）</span>
+  → 回到電源（完成閉合迴路）
+
+<span style="color:var(--green)">關鍵：有電流流過的地方就危險，不管電壓是幾 V</span></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="info-box box">
+      <div class="box-label">🔬 歐姆定律</div>
+      <div class="box-text">
+        <span style="color:var(--blue);font-family:'JetBrains Mono',monospace">I = V / R</span><br><br>
+        人體接觸 N 線：<br>
+        • 人體阻抗 ≈ 1000Ω（皮膚乾燥時）<br>
+        • N 線對地電位偏移可能有 3～5V<br>
+        • I = 5V ÷ 1000Ω = <span style="color:var(--red)">5mA（有感電）</span><br><br>
+        且人體形成新的回路，可能導致更大電流
+      </div>
+    </div>
+    <div class="trap-box box">
+      <div class="box-label">⚡ 電流對人體的影響</div>
+      <div class="box-text" style="font-family:'JetBrains Mono',monospace;font-size:13px;line-height:2">
+        <span style="color:var(--text3)">1 mA</span>   → 輕微刺麻感<br>
+        <span style="color:var(--yellow)">10 mA</span>  → 肌肉無法放開（握緊）<br>
+        <span style="color:var(--orange)">30 mA</span>  → RCBO 跳脫臨界，心跳異常<br>
+        <span style="color:var(--red)">100 mA</span> → 心室纖維顫動，致命<br>
+        <span style="color:var(--red)">1000 mA</span>→ 心臟驟停，嚴重燒傷
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P4 PE線：漏電保護機制 ══════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="slide-title">🛡️ 地線 PE：漏電保護的完整機制</div>
+  <div class="slide-sub">PE 為何能保護你不觸電？背後有嚴謹的物理邏輯</div>
+
+  <div class="grid-2">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px">正常狀態 vs 漏電狀態</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:8px;padding:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px">✅ 正常狀態</div>
+          <div style="font-size:13px;color:#aff5b4;line-height:1.7">
+            PE 電流 = 0A<br>
+            設備外殼電位 = 0V<br>
+            人碰外殼 → 安全<br>
+            就像消防門平常鎖著
+          </div>
+        </div>
+        <div style="background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;padding:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">⚡ 漏電狀態</div>
+          <div style="font-size:13px;color:#ffa198;line-height:1.7">
+            設備絕緣破損 → 電漏到外殼<br>
+            PE 提供低阻抗（0.1Ω）逃生路<br>
+            電選 PE，不選人體（人體 1000Ω）<br>
+            RCBO 偵測到電流差 → 跳脫
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-wrap" style="height:fit-content">
+      <div class="code-header"><span>漏電電流完整路徑</span></div>
+      <div class="code-body">設備絕緣破損（漏電開始）
+  ↓
+PE 導線（銅線，≈ 0.1Ω）
+  ↓
+你家接地棒（打入地下 2m）
+  ↓
+大地（整塊土壤導電，擴散）
+  ↓
+台電接地棒（巷口變壓器旁，30～50m）
+  ↓
+變壓器中性點（N 點）
+  ↓
+回到電源（閉合迴路完成）
+
+↑ 這條路阻抗 ≈ 20Ω
+↑ 人體阻抗 ≈ 1000Ω
+→ 電流選阻抗最低的路走</div>
+    </div>
+  </div>
+
+  <div class="info-box box">
+    <div class="box-label">🔌 RCBO 如何偵測漏電</div>
+    <div class="box-text">
+      RCBO 同時量測 L 線進去的電流和 N 線回來的電流。正常狀況兩者相等，差值 = 0。
+      有漏電時：<span style="color:var(--blue)">I(L) - I(N) = 漏電電流</span>。
+      差值 ≥ <span style="color:var(--yellow)">30mA</span>（一般用途），RCBO 在 0.04 秒內跳脫斷電。
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P5 3P3W vs 3P4W ══════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="slide-title">🔌 三相三線 vs 三相四線</div>
+  <div class="slide-sub">只差一條 N 線，能力卻差很多</div>
+
+  <table class="cmp-table" style="flex:none">
+    <thead>
+      <tr>
+        <th>比較項目</th>
+        <th style="color:var(--orange)">三相三線（3P3W）</th>
+        <th style="color:var(--blue)">三相四線（3P4W）</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>導線數</td>
+        <td>3 條（R、S、T）</td>
+        <td>4 條（R、S、T、<span style="color:var(--yellow)">N</span>）</td>
+      </tr>
+      <tr>
+        <td>接法</td>
+        <td>Delta 接 或 無中性點 Star 接</td>
+        <td>Star 接（Y 接）</td>
+      </tr>
+      <tr>
+        <td>線電壓 vs 相電壓</td>
+        <td>線電壓 = 相電壓（Delta）</td>
+        <td>線電壓 = <span style="color:var(--blue)">√3 × 相電壓</span></td>
+      </tr>
+      <tr>
+        <td>有無 N 線</td>
+        <td style="color:var(--red)">❌ 無</td>
+        <td style="color:var(--green)">✅ 有</td>
+      </tr>
+      <tr>
+        <td>可取單相電（127V）</td>
+        <td style="color:var(--red)">❌ 不能</td>
+        <td style="color:var(--green)">✅ 可以（相線 + N 線）</td>
+      </tr>
+      <tr>
+        <td>適用場景</td>
+        <td>純三相馬達、三相加熱器</td>
+        <td>商業大樓、工廠、住宅（台灣最常見）</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="grid-2">
+    <div class="tip-box box">
+      <div class="box-label">🎯 判斷關鍵</div>
+      <div class="box-text">
+        看現場有幾條線進來：<br>
+        • 3 條 = 3P3W，只能接三相設備<br>
+        • 4 條 = 3P4W，三相 + 單相都能接<br>
+        • 5 條 = 3P4W + PE，最完整的配置
+      </div>
+    </div>
+    <div class="info-box box">
+      <div class="box-label">💡 3P4W 取 127V 的接法</div>
+      <div class="box-text">
+        一條相線（R 或 S 或 T）+ 一條 N 線<br>
+        = 相電壓 = <span style="color:var(--blue)">127V</span><br><br>
+        再加 PE 線接設備外殼（保護用，不在電流迴路內）<br>
+        → 這就是家用插座的完整配置
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P6 電壓計算 ══════════════════════════════ -->
+<div class="slide" id="s5">
+  <div class="slide-title">📐 Star / Delta 電壓電流關係</div>
+  <div class="slide-sub">只有兩個公式，但這兩個公式在現場每天都用到</div>
+
+  <div class="grid-2">
+    <div class="code-wrap">
+      <div class="code-header"><span>⭐ Star 接（Y接）— 3P4W 適用</span></div>
+      <div class="code-body"><span style="color:var(--blue)">線電壓（V_L）= √3 × 相電壓（V_P）</span>
+<span style="color:var(--green)">線電流（I_L）= 相電流（I_P）</span>
+
+√3 ≈ <span style="color:var(--orange)">1.732</span>
+
+台灣低壓：
+  127V × 1.732 = <span style="color:var(--yellow)">220V</span>（兩相線間）
+
+台灣工業：
+  220V × 1.732 = <span style="color:var(--yellow)">380V</span>（兩相線間）</div>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header"><span>🔺 Delta 接（△接）— 3P3W 適用</span></div>
+      <div class="code-body"><span style="color:var(--orange)">線電壓（V_L）= 相電壓（V_P）</span>
+<span style="color:var(--red)">線電流（I_L）= √3 × 相電流（I_P）</span>
+
+⚠️ 注意：Delta 接時
+  線電流比相電流大 √3 倍！
+  → 選電纜要用線電流計算
+  → 常見選型錯誤來源</div>
+    </div>
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem">
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">互動計算：輸入相電壓，查看線電壓</div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:13px;color:var(--text3)">相電壓 V_P =</span>
+        <input id="vp-input" type="number" value="127" style="width:80px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:6px;font-size:14px;font-family:'JetBrains Mono',monospace" oninput="calcV()">
+        <span style="font-size:13px;color:var(--text3)">V</span>
+      </div>
+      <div style="font-size:13px;color:var(--text3)">→ 線電壓 V_L =</div>
+      <div id="vl-result" style="font-size:20px;font-weight:700;color:var(--yellow);font-family:'JetBrains Mono',monospace">220.1 V</div>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-top:8px">試試輸入 127、220、380，驗證你的理解</div>
+  </div>
+
+  <div class="tip-box box">
+    <div class="box-label">🎯 記憶口訣</div>
+    <div class="box-text">Star 接：電壓升 √3 倍，電流不變。Delta 接：電壓不變，電流升 √3 倍。兩者剛好相反。</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P7 台灣電壓規格 ══════════════════════════════ -->
+<div class="slide" id="s6">
+  <div class="slide-title">🇹🇼 台灣電壓規格完整對照</div>
+  <div class="slide-sub">現場最常需要確認的參數，印起來貼在配電室</div>
+
+  <div class="grid-3">
+    <div class="spec-card">
+      <div class="spec-badge" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)">低壓商業 / 工廠</div>
+      <div class="spec-v" style="color:var(--blue)">127 / 220V</div>
+      <div class="spec-desc">
+        系統：3P4W Star 接<br>
+        相電壓：127V（相線對 N）<br>
+        線電壓：220V（相線對相線）<br>
+        台灣最常見配置
+      </div>
+    </div>
+    <div class="spec-card">
+      <div class="spec-badge" style="background:var(--orange);color:#000;border:1px solid var(--orange)">工業重型設備</div>
+      <div class="spec-v" style="color:var(--orange)">220 / 380V</div>
+      <div class="spec-desc">
+        系統：3P4W Star 接<br>
+        相電壓：220V（相線對 N）<br>
+        線電壓：380V（相線對相線）<br>
+        大型工廠、資料中心
+      </div>
+    </div>
+    <div class="spec-card">
+      <div class="spec-badge" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)">住宅（台灣特有）</div>
+      <div class="spec-v" style="color:var(--purple)">110 / 220V</div>
+      <div class="spec-desc">
+        系統：單相三線<br>
+        全壓 220V：冷氣、熱水器<br>
+        半壓 110V：插座、照明<br>
+        ⚠️ 家用 220V 冷氣是單相，不是三相
+      </div>
+    </div>
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem">
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">台電配電系統：從發電廠到你家</div>
+    <div style="display:flex;align-items:center;gap:0;overflow-x:auto;font-size:12px;font-family:'JetBrains Mono',monospace">
+      <div style="text-align:center;padding:8px 12px;background:var(--bg3);border-radius:6px;min-width:80px">
+        <div style="color:var(--red);font-size:16px">🏭</div>
+        <div style="color:var(--text3)">發電廠</div>
+      </div>
+      <div style="color:var(--border2);padding:0 4px">→</div>
+      <div style="text-align:center;padding:8px 12px;background:var(--bg3);border-radius:6px;min-width:80px">
+        <div style="color:var(--yellow);font-size:12px">升壓</div>
+        <div style="color:var(--yellow)">345kV</div>
+      </div>
+      <div style="color:var(--border2);padding:0 4px">→</div>
+      <div style="text-align:center;padding:8px 12px;background:var(--bg3);border-radius:6px;min-width:80px">
+        <div style="color:var(--text3);font-size:12px">一次變電所</div>
+        <div style="color:var(--orange)">22kV</div>
+      </div>
+      <div style="color:var(--border2);padding:0 4px">→</div>
+      <div style="text-align:center;padding:8px 12px;background:var(--bg3);border-radius:6px;min-width:80px">
+        <div style="color:var(--text3);font-size:12px">路旁變壓器</div>
+        <div style="color:var(--blue)">220/127V</div>
+      </div>
+      <div style="color:var(--border2);padding:0 4px">→</div>
+      <div style="text-align:center;padding:8px 12px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:6px;min-width:80px">
+        <div style="color:var(--green);font-size:16px">🏠</div>
+        <div style="color:var(--green)">你家</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-top:8px">N 線和接地棒都在巷口那根路旁變壓器，距離你家只有幾十公尺，跟高雄的台電毫無關係。</div>
+  </div>
+
+  <div class="tip-box box">
+    <div class="box-label">⚡ 為何高壓輸電能解決距離問題</div>
+    <div class="box-text">
+      損耗公式：<span style="color:var(--orange);font-family:'JetBrains Mono',monospace">P_損 = I² × R</span>。
+      345kV vs 220V：電流縮小 1570 倍，損耗縮小 2.46 億倍。
+      台灣南北 400km 輸電損耗只有 2～3%，距離根本不是問題。
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P8 小測驗 ══════════════════════════════ -->
+<div class="slide" id="s7">
+  <div class="slide-title">🧪 觀念測驗</div>
+  <div class="slide-sub">確認你真的懂了，不是記起來而已</div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="quiz-wrap" id="q1">
+      <div class="quiz-q">Q1：N 線電壓是 0V，所以可以放心用手直接摸，不會觸電。</div>
+      <div class="quiz-opts">
+        <button class="quiz-opt" onclick="ans(this,'q1',false)">A. 正確，0V 就代表安全</button>
+        <button class="quiz-opt" onclick="ans(this,'q1',true)">B. 錯誤，N 線有電流，碰觸仍然危險</button>
+      </div>
+      <div class="quiz-feedback" id="q1-fb"></div>
+    </div>
+
+    <div class="quiz-wrap" id="q2">
+      <div class="quiz-q">Q2：台灣商業大樓標準配電是 3P4W，相電壓 127V，兩條相線之間的電壓是多少？</div>
+      <div class="quiz-opts">
+        <button class="quiz-opt" onclick="ans(this,'q2',false)">A. 127V（相電壓直接加倍）</button>
+        <button class="quiz-opt" onclick="ans(this,'q2',false)">B. 254V（127 × 2）</button>
+        <button class="quiz-opt" onclick="ans(this,'q2',true)">C. 220V（127 × √3 ≈ 220V）</button>
+        <button class="quiz-opt" onclick="ans(this,'q2',false)">D. 380V（工業用）</button>
+      </div>
+      <div class="quiz-feedback" id="q2-fb"></div>
+    </div>
+
+    <div class="quiz-wrap" id="q3">
+      <div class="quiz-q">Q3：PE（地線）在正常運作狀態下，上面的電流應該是多少？</div>
+      <div class="quiz-opts">
+        <button class="quiz-opt" onclick="ans(this,'q3',false)">A. 和 L 線一樣大</button>
+        <button class="quiz-opt" onclick="ans(this,'q3',true)">B. 0A（正常無電流）</button>
+        <button class="quiz-opt" onclick="ans(this,'q3',false)">C. 30mA 以下</button>
+      </div>
+      <div class="quiz-feedback" id="q3-fb"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<div class="footer">
+  <button class="btn btn-prev" id="bprev" onclick="go(-1)" disabled>← 上一頁</button>
+  <div style="font-size:12px;color:var(--text4)">⚡ 三相配電基礎 · ELEC-01</div>
+  <button class="btn btn-next" id="bnext" onclick="go(1)">下一頁 →</button>
+</div>
+
+<script>
+const TOTAL = 8;
+let cur = 0;
+
+const answers = {
+  q1: { correct: 'B', explain: 'N 線電壓 0V 是因為它是電流的回程路，但電流依然存在，30mA 就能造成心室纖維顫動。0V ≠ 安全！'},
+  q2: { correct: 'C', explain: '線電壓 = √3 × 相電壓 = 1.732 × 127 ≈ 220V。這是 Star 接的核心公式，背起來！'},
+  q3: { correct: 'B', explain: 'PE 正常狀態電流 = 0A。PE 有電流代表有漏電或 N/PE 混接，這是現場最重要的警示信號，必須立即查！'}
+};
+
+function render(){
+  document.querySelectorAll('.slide').forEach(s => {
+    s.classList.remove('active','exit-left');
+  });
+  document.getElementById('s'+cur).classList.add('active');
+  const fill = Math.round((cur/(TOTAL-1))*100);
+  document.getElementById('pfill').style.width = fill+'%';
+  document.getElementById('pnum').textContent = (cur+1)+' / '+TOTAL;
+  document.getElementById('bprev').disabled = cur === 0;
+  document.getElementById('bnext').disabled = cur === TOTAL-1;
+  const dotsEl = document.getElementById('dots');
+  dotsEl.innerHTML = '';
+  for(let i=0;i<TOTAL;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===cur?' active':i<cur?' done':'');
+    dotsEl.appendChild(d);
+  }
+}
+
+function go(dir){
+  const prev = cur;
+  cur = Math.max(0, Math.min(TOTAL-1, cur+dir));
+  if(cur !== prev){
+    document.getElementById('s'+prev).classList.add('exit-left');
+    setTimeout(()=>{
+      document.getElementById('s'+prev).classList.remove('exit-left');
+    }, 350);
+    render();
+  }
+}
+
+function ans(btn, qid, isCorrect){
+  const wrap = document.getElementById(qid);
+  const opts = wrap.querySelectorAll('.quiz-opt');
+  const fb = document.getElementById(qid+'-fb');
+  opts.forEach(o => { o.disabled = true; });
+  btn.classList.add(isCorrect ? 'correct' : 'wrong');
+  if(!isCorrect){
+    opts.forEach(o => {
+      if(o.textContent.trim().startsWith(answers[qid].correct)){
+        o.classList.add('correct');
+      }
+    });
+  }
+  fb.className = 'quiz-feedback ' + (isCorrect ? 'ok' : 'ng');
+  fb.style.display = 'block';
+  fb.textContent = (isCorrect ? '✅ 正確！' : '❌ 錯了。') + ' ' + answers[qid].explain;
+}
+
+function calcV(){
+  const vp = parseFloat(document.getElementById('vp-input').value) || 0;
+  const vl = (vp * Math.sqrt(3)).toFixed(1);
+  document.getElementById('vl-result').textContent = vl + ' V';
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key==='ArrowRight'||e.key===' ') go(1);
+  if(e.key==='ArrowLeft') go(-1);
+});
+
+render();
+</script>
+</body>
+</html>
