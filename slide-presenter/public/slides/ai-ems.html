@@ -625,6 +625,7 @@ function render(){
   document.querySelectorAll('.slide').forEach((s,i)=>{
     s.classList.remove('active','exit-left');
   });
+  document.getElementById('s'+cur).classList.add('active');
   // dots
   const dotsEl = document.getElementById('dots');
   dotsEl.innerHTML = '';
