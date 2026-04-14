@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 能源管理系統（EMS）</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--bg4:#2d333b;
+  --border:#30363d;--border2:#3d444d;
+  --text:#e6edf3;--text2:#c9d1d9;--text3:#8b949e;--text4:#6e7681;
+  --blue:#58a6ff;--blue-bg:#0d1926;--blue-border:#388bfd;
+  --green:#3fb950;--green-bg:#0d2818;--green-border:#238636;
+  --red:#f85149;--red-bg:#2d1a1a;--red-border:#da3633;
+  --yellow:#e3b341;--yellow-bg:#2d2100;--yellow-border:#9e6a03;
+  --purple:#d2a8ff;--purple-bg:#1a1030;--purple-border:#8957e5;
+  --orange:#ffa657;
+}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.h-left{display:flex;align-items:center;gap:12px}
+.h-badge{background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.05em}
+.h-title{font-size:16px;font-weight:700;color:var(--text)}
+.h-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.h-right{display:flex;align-items:center;gap:14px}
+.progress-bar{width:180px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:2px;transition:width 0.4s cubic-bezier(.4,0,.2,1)}
+.page-num{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;min-width:48px;text-align:right}
+.dots{display:flex;gap:4px;align-items:center}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--border2);transition:all 0.3s}
+.dot.active{background:var(--blue);width:16px;border-radius:3px}
+.dot.done{background:var(--blue);opacity:0.4}
+.main{flex:1;overflow:hidden;position:relative}
+.slide{position:absolute;inset:0;padding:1.75rem 3rem;display:flex;flex-direction:column;gap:1rem;opacity:0;transform:translateX(40px);transition:all 0.35s cubic-bezier(.4,0,.2,1);pointer-events:none;overflow-y:auto}
+.slide.active{opacity:1;transform:translateX(0);pointer-events:all}
+.slide.exit-left{opacity:0;transform:translateX(-40px)}
+.slide::-webkit-scrollbar{width:4px}
+.slide::-webkit-scrollbar-track{background:transparent}
+.slide::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.footer{background:var(--bg2);border-top:1px solid var(--border);padding:0 3rem;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.btn{padding:8px 24px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s}
+.btn-prev{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+.btn-prev:hover:not(:disabled){background:var(--border);color:var(--text)}
+.btn-next{background:var(--blue-border);color:#fff}
+.btn-next:hover:not(:disabled){background:#1a7fe0}
+.btn:disabled{opacity:0.3;cursor:not-allowed}
+.slide-title{font-size:26px;font-weight:700;color:var(--text);line-height:1.2}
+.slide-title-sm{font-size:20px;font-weight:700;color:var(--text)}
+.slide-sub{font-size:14px;color:var(--text3);margin-top:-0.5rem}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.box{border-radius:10px;padding:1rem 1.25rem}
+.box-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.box-text{font-size:14px;line-height:1.7}
+.life-box{background:var(--green-bg);border:1px solid var(--green-border)}
+.life-box .box-label{color:var(--green)}
+.life-box .box-text{color:#aff5b4}
+.trap-box{background:var(--red-bg);border:1px solid var(--red-border)}
+.trap-box .box-label{color:var(--red)}
+.trap-box .box-text{color:#ffa198}
+.info-box{background:var(--blue-bg);border:1px solid var(--blue-border)}
+.info-box .box-label{color:var(--blue)}
+.info-box .box-text{color:#a5c8ff}
+.tip-box{background:var(--yellow-bg);border:1px solid var(--yellow-border)}
+.tip-box .box-label{color:var(--yellow)}
+.tip-box .box-text{color:#f0c96e}
+.purple-box{background:var(--purple-bg);border:1px solid var(--purple-border)}
+.purple-box .box-label{color:var(--purple)}
+.purple-box .box-text{color:#e2ccff}
+.code-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.code-header{background:var(--bg3);padding:8px 14px;font-size:12px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.code-body{padding:1rem 1.25rem;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text2);white-space:pre;line-height:1.9;overflow-x:auto}
+.step-list{display:flex;flex-direction:column;gap:10px}
+.step-item{display:flex;gap:12px;align-items:flex-start}
+.step-num{min-width:26px;height:26px;border-radius:50%;background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-text{font-size:14px;color:var(--text2);line-height:1.7}
+.hl{color:var(--orange);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-g{color:var(--green);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-b{color:var(--blue);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-p{color:var(--purple);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-r{color:var(--red);font-family:'JetBrains Mono',monospace;font-size:13px}
+.quiz-wrap{background:var(--bg2);border:1px solid var(--purple-border);border-radius:12px;padding:1.5rem}
+.quiz-q{font-size:15px;font-weight:500;color:var(--text);margin-bottom:1rem;line-height:1.6}
+.quiz-opts{display:flex;flex-direction:column;gap:8px;margin-top:1rem}
+.quiz-opt{background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:11px 16px;font-size:14px;color:var(--text2);cursor:pointer;text-align:left;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s}
+.quiz-opt:hover:not([disabled]){border-color:var(--purple);color:var(--text)}
+.quiz-opt.correct{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.quiz-opt.wrong{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.quiz-feedback{font-size:13px;margin-top:12px;padding:10px 14px;border-radius:8px;display:none;line-height:1.6}
+.quiz-feedback.ok{background:var(--green-bg);color:#aff5b4;border:1px solid var(--green-border)}
+.quiz-feedback.ng{background:var(--red-bg);color:#ffa198;border:1px solid var(--red-border)}
+.summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.summary-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.1rem}
+.summary-title{font-size:13px;font-weight:700;color:var(--blue);margin-bottom:8px}
+.summary-body{font-size:12px;color:var(--text3);line-height:1.9}
+/* Layer card */
+.layer-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;display:flex;gap:12px;align-items:flex-start;cursor:pointer;transition:all 0.2s}
+.layer-card:hover{border-color:var(--blue-border);background:var(--blue-bg)}
+.layer-icon{font-size:24px;min-width:32px;text-align:center}
+.layer-content{}
+.layer-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.layer-desc{font-size:12px;color:var(--text3);line-height:1.6}
+.layer-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tag{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-family:'JetBrains Mono',monospace}
+/* Strategy card */
+.strategy-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:0.9rem 1.1rem;transition:all 0.2s;cursor:default}
+.strategy-card:hover{border-color:var(--blue-border)}
+.strategy-icon{font-size:20px;margin-bottom:6px}
+.strategy-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.strategy-desc{font-size:12px;color:var(--text3);line-height:1.5}
+/* Protocol row */
+.proto-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
+.proto-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--orange);min-width:120px}
+.proto-desc{font-size:13px;color:var(--text2);flex:1}
+.proto-badge{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--bg3);border:1px solid var(--border2);color:var(--text3)}
+/* AI vs Traditional */
+.vs-table{width:100%;border-collapse:collapse}
+.vs-table th{background:var(--bg3);padding:10px 14px;font-size:12px;color:var(--text3);text-align:left;border:1px solid var(--border)}
+.vs-table td{padding:10px 14px;font-size:13px;border:1px solid var(--border);vertical-align:top;line-height:1.6}
+.vs-table tr:nth-child(even) td{background:var(--bg2)}
+.vs-table .td-trad{color:var(--text3)}
+.vs-table .td-ai{color:var(--blue)}
+/* Peak shaving viz */
+.chart-area{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem;position:relative}
+.chart-label{font-size:12px;color:var(--text3);margin-bottom:10px;font-family:'JetBrains Mono',monospace}
+.bar-group{display:flex;gap:6px;align-items:flex-end;height:120px;margin-bottom:8px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{width:100%;border-radius:4px 4px 0 0;transition:all 0.5s;position:relative;min-height:4px}
+.bar-val{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);position:absolute;top:-18px;left:50%;transform:translateX(-50%);white-space:nowrap}
+.bar-time{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.bar-raw{background:rgba(248,81,73,0.6)}
+.bar-managed{background:rgba(88,166,255,0.7)}
+.contract-line{position:absolute;left:1.25rem;right:1.25rem;border-top:2px dashed var(--yellow);pointer-events:none}
+.chart-legend{display:flex;gap:16px;margin-top:8px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3)}
+.legend-dot{width:10px;height:10px;border-radius:2px}
+/* Demand penalty box */
+.penalty-demo{background:var(--red-bg);border:1px solid var(--red-border);border-radius:10px;padding:1rem 1.25rem}
+.penalty-title{font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px}
+.penalty-calc{font-family:'JetBrains Mono',monospace;font-size:12px;color:#ffa198;line-height:1.8}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="h-left">
+    <div class="h-badge">EMS</div>
+    <div>
+      <div class="h-title">AI 能源管理系統（EMS）</div>
+      <div class="h-sub">讓電力系統的「大腦」從規則引擎進化成 AI 調度</div>
+    </div>
+  </div>
+  <div class="h-right">
+    <div class="dots" id="dots"></div>
+    <div class="progress-bar"><div class="progress-fill" id="pfill"></div></div>
+    <div class="page-num" id="pnum">1 / 10</div>
+  </div>
+</div>
+
+<div class="main" id="main">
+
+<!-- ══════════════════════════════ P1 封面 ══════════════════════════════ -->
+<div class="slide active" id="s0">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:1.5rem">
+    <div style="font-size:56px">🧠</div>
+    <div>
+      <div style="font-size:36px;font-weight:700;line-height:1.2">AI 能源管理系統</div>
+      <div style="font-size:22px;color:var(--blue);margin-top:6px">EMS — Energy Management System</div>
+    </div>
+    <div style="font-size:15px;color:var(--text3);max-width:480px;line-height:1.8">
+      太陽能、電池、充電樁同時在運作，<br>誰來決定電要往哪裡流？<br>
+      <span style="color:var(--yellow)">這就是 EMS 在做的事。</span>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+      <span style="background:var(--bg2);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--text3)">四層架構</span>
+      <span style="background:var(--bg2);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--text3)">需量控制</span>
+      <span style="background:var(--bg2);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--text3)">AI 調度</span>
+      <span style="background:var(--bg2);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--text3)">通訊協定</span>
+      <span style="background:var(--bg2);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;color:var(--text3)">充放電策略</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P2 故事引入 ══════════════════════════════ -->
+<div class="slide" id="s1">
+  <div class="slide-title">😤 小明的煩惱</div>
+  <div class="slide-sub">一個真實會發生的場景</div>
+
+  <div class="life-box box">
+    <div class="box-label">🏢 故事背景</div>
+    <div class="box-text">
+      小明管理一棟商辦大樓，裝了 <span style="color:var(--green)">100kWp 太陽能</span>、<span style="color:var(--blue)">200kWh 儲能電池</span>、<span style="color:var(--orange)">20 支 7kW 充電樁</span>。<br><br>
+      理論上應該省很多電費，但每個月帳單出來……還是很高。
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="trap-box box">
+      <div class="box-label">❌ 問題一：超約用電罰款</div>
+      <div class="box-text">
+        某天下午 2 點，20 支充電樁同時在充電，用電瞬間飆到 180kW。<br>
+        契約容量只有 100kW → <span style="color:var(--red)">罰款 2 倍電費！</span>
+      </div>
+    </div>
+    <div class="trap-box box">
+      <div class="box-label">❌ 問題二：白白浪費太陽能</div>
+      <div class="box-text">
+        中午太陽最好，太陽能猛發電，但電池已經充滿了，多出來的電全部棄掉。<br>
+        同時下午 5 點電費貴，卻沒電可放。
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box box">
+    <div class="box-label">💡 問題根源</div>
+    <div class="box-text">
+      三個系統各自為政，<strong style="color:var(--blue)">沒有一個「大腦」統一調度</strong>。<br>
+      EMS 就是那個大腦——讓所有設備協同工作，不浪費、不罰款。
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P3 EMS 是什麼 ══════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="slide-title">🚦 EMS 是什麼？</div>
+  <div class="slide-sub">Energy Management System — 能源管理系統</div>
+
+  <div class="life-box box">
+    <div class="box-label">🚗 生活比喻</div>
+    <div class="box-text">
+      把整棟大樓的用電想成台北市的交通。<br><br>
+      <strong style="color:var(--green)">EMS = 交通管制中心</strong>，控制所有路口的紅綠燈。<br>
+      太陽能 = 南下車流（能量輸入）<br>
+      電池 = 臨時停車場（能量緩衝）<br>
+      充電樁 = 目的地（能量消耗）<br>
+      台電 = 高速公路（備援通道）<br><br>
+      沒有管制中心 → 塞車、亂成一團 → 就是小明的問題
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="info-box box">
+      <div class="box-label">📊 EMS 即時做的事</div>
+      <div class="box-text">
+        每秒監控：<br>
+        ・目前發了多少電（PV）<br>
+        ・電池剩多少（SOC）<br>
+        ・負載用多少（充電樁+大樓）<br>
+        ・現在電價是幾元/度<br><br>
+        根據這些數據，下達指令給每個設備
+      </div>
+    </div>
+    <div class="purple-box box">
+      <div class="box-label">🎯 EMS 的三大目標</div>
+      <div class="box-text">
+        <span style="color:var(--green)">1. 省錢</span> — 最小化電費支出<br>
+        <span style="color:var(--blue)">2. 穩定</span> — 不超過契約容量<br>
+        <span style="color:var(--purple)">3. 效益</span> — 參與電力市場賺錢<br><br>
+        AI 版本還會加上：<br>
+        <span style="color:var(--orange)">4. 預測</span> — 明天會怎樣，提前佈局
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P4 四層架構 ══════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="slide-title">🏗️ EMS 四層架構</div>
+  <div class="slide-sub">從感測器到決策大腦，每一層都有任務</div>
+
+  <div class="step-list">
+    <div class="layer-card" onclick="toggleLayer(this)">
+      <div class="layer-icon">📡</div>
+      <div class="layer-content">
+        <div class="layer-title" style="color:var(--green)">Layer 1：感測層（Sensing）</div>
+        <div class="layer-desc">蒐集所有原始數據。就像人體的「神經末梢」，感受溫度、壓力、電流。</div>
+        <div class="layer-tags">
+          <span class="tag">智慧電表 AMI</span>
+          <span class="tag">CT 電流勾</span>
+          <span class="tag">溫濕度感測器</span>
+          <span class="tag">日照計</span>
+          <span class="tag">PLC/RTU</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer-card" onclick="toggleLayer(this)">
+      <div class="layer-icon">📶</div>
+      <div class="layer-content">
+        <div class="layer-title" style="color:var(--blue)">Layer 2：通訊層（Communication）</div>
+        <div class="layer-desc">把感測數據「翻譯」並傳送到平台。就像快遞，把各地包裹送到同一個倉庫。</div>
+        <div class="layer-tags">
+          <span class="tag">Modbus RTU/TCP</span>
+          <span class="tag">MQTT</span>
+          <span class="tag">OPC-UA</span>
+          <span class="tag">IEC 61850</span>
+          <span class="tag">4G/5G</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer-card" onclick="toggleLayer(this)">
+      <div class="layer-icon">☁️</div>
+      <div class="layer-content">
+        <div class="layer-title" style="color:var(--yellow)">Layer 3：平台層（Platform）</div>
+        <div class="layer-desc">儲存、計算、整合數據。就像「資料倉庫 + 運算中心」。</div>
+        <div class="layer-tags">
+          <span class="tag">SCADA</span>
+          <span class="tag">雲端平台 AWS/Azure</span>
+          <span class="tag">InfluxDB 時序資料庫</span>
+          <span class="tag">Grafana 視覺化</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer-card" onclick="toggleLayer(this)">
+      <div class="layer-icon">🧠</div>
+      <div class="layer-content">
+        <div class="layer-title" style="color:var(--purple)">Layer 4：應用層（Application）</div>
+        <div class="layer-desc">真正做決策、出結果。就像「醫生看報告、開藥方」。</div>
+        <div class="layer-tags">
+          <span class="tag">即時監控儀表板</span>
+          <span class="tag">需量控制</span>
+          <span class="tag">AI 最佳化調度</span>
+          <span class="tag">發電/用電預測</span>
+          <span class="tag">碳管理</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P5 需量控制 ══════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="slide-title">⚡ 需量控制</div>
+  <div class="slide-sub">EMS 最核心的日常任務之一</div>
+
+  <div class="tip-box box">
+    <div class="box-label">📋 什麼是「契約容量」</div>
+    <div class="box-text">
+      你跟台電簽約：「我最多同時用 <span style="color:var(--yellow)">100kW</span>」，這就是契約容量。<br>
+      就像餐廳跟瓦斯公司說：「我最多同時開 10 個爐子」。<br>
+      <strong>超過就被罰款，不管超多少次都算超。</strong>
+    </div>
+  </div>
+
+  <div class="penalty-demo">
+    <div class="penalty-title">💸 超約罰款計算（台電規定）</div>
+    <div class="penalty-calc">契約容量：100 kW
+某天尖峰用電：140 kW（超了 40kW）
+
+超約罰款 = 超出部分 × 基本電費 × 2 倍罰則
+         = 40kW × 263 元/kW × 2
+         = 21,040 元（單月！）
+
+一年若超約 6 次 = 約 126,240 元罰款</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="info-box box">
+      <div class="box-label">✅ EMS 如何防止超約</div>
+      <div class="box-text">
+        每 <span style="color:var(--blue)">15 分鐘</span>計算一次平均需量<br>
+        接近警戒值（契約 95%）時：<br>
+        1. 充電樁降功率充電<br>
+        2. 儲能電池放電補足<br>
+        3. 非必要空調降載<br>
+        4. 照明自動減光
+      </div>
+    </div>
+    <div class="life-box box">
+      <div class="box-label">🎯 比喻</div>
+      <div class="box-text">
+        就像車子快超速了，EMS 自動踩煞車。<br><br>
+        95% 警戒 = 時速 114（快到 120 限速了）<br>
+        EMS 自動減速 → 不超速 → 不被罰款
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P6 削峰填谷 ══════════════════════════════ -->
+<div class="slide" id="s5">
+  <div class="slide-title">📊 削峰填谷</div>
+  <div class="slide-sub">EMS 的最基本充放電策略</div>
+
+  <div class="chart-area" style="position:relative">
+    <div class="chart-label">每日用電曲線（kW） — 點擊「套用 EMS」看差異</div>
+    <div id="chartBars" class="bar-group"></div>
+    <div id="contractLine" class="contract-line" style="top:calc(1.25rem + 16px + 0px)"></div>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(248,81,73,0.6)"></div>原始負載</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(88,166,255,0.7)"></div>EMS 管理後</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(227,179,65,0.8);height:2px;width:20px;border-radius:1px"></div>契約容量 100kW</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-top:4px">
+    <button onclick="showRaw()" style="background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-family:'Noto Sans TC',sans-serif">顯示原始負載</button>
+    <button onclick="showManaged()" style="background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-family:'Noto Sans TC',sans-serif">套用 EMS 後</button>
+  </div>
+
+  <div class="grid-2">
+    <div class="tip-box box">
+      <div class="box-label">🌙 離峰（凌晨 22:00 ~ 08:00）</div>
+      <div class="box-text">電費便宜 → EMS 指揮電池「充電」，把便宜的電存起來</div>
+    </div>
+    <div class="info-box box">
+      <div class="box-label">☀️ 尖峰（09:00 ~ 21:00）</div>
+      <div class="box-text">電費貴 → EMS 指揮電池「放電」，少買台電的貴電</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P7 傳統 vs AI ══════════════════════════════ -->
+<div class="slide" id="s6">
+  <div class="slide-title">🆚 傳統 EMS vs AI EMS</div>
+  <div class="slide-sub">同樣是「大腦」，但智力差很多</div>
+
+  <div class="life-box box" style="margin-bottom:4px">
+    <div class="box-label">🍳 比喻</div>
+    <div class="box-text">
+      <strong style="color:var(--green)">傳統 EMS</strong> = 照食譜做菜的廚師。食譜寫什麼就做什麼，不會變通。<br>
+      <strong style="color:var(--blue)">AI EMS</strong> = 米其林主廚。根據今天食材、天氣、客人口味，即興發揮最佳菜單。
+    </div>
+  </div>
+
+  <table class="vs-table">
+    <thead>
+      <tr>
+        <th>比較項目</th>
+        <th style="color:var(--text3)">傳統 EMS（規則引擎）</th>
+        <th style="color:var(--blue)">AI EMS</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>決策方式</td>
+        <td class="td-trad">人工設規則：IF 日照 &gt; 500W 且 SOC &lt; 80% THEN 充電</td>
+        <td class="td-ai">學習歷史數據，自動找最省錢的策略組合</td>
+      </tr>
+      <tr>
+        <td>預測能力</td>
+        <td class="td-trad">無，只看當下狀態</td>
+        <td class="td-ai">預測未來 24~48 小時的發電量、用電量、電價</td>
+      </tr>
+      <tr>
+        <td>適應新情境</td>
+        <td class="td-trad">需要人工修改規則</td>
+        <td class="td-ai">自動學習新模式，持續優化</td>
+      </tr>
+      <tr>
+        <td>多目標優化</td>
+        <td class="td-trad">困難，規則多了容易衝突</td>
+        <td class="td-ai">同時優化省電費 + 不超約 + 電池壽命</td>
+      </tr>
+      <tr>
+        <td>典型演算法</td>
+        <td class="td-trad">決策樹、IF-ELSE 規則庫</td>
+        <td class="td-ai">LSTM 預測、MILP 最佳化、DQN 強化學習</td>
+      </tr>
+      <tr>
+        <td>效益提升</td>
+        <td class="td-trad">基準線</td>
+        <td class="td-ai" style="color:var(--green)">比傳統多省 5~15% 電費</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════════════════ P8 充放電六大策略 ══════════════════════════════ -->
+<div class="slide" id="s7">
+  <div class="slide-title">🔋 充放電六大策略</div>
+  <div class="slide-sub">EMS 根據場景自動切換，也可以組合使用</div>
+
+  <div class="grid-3">
+    <div class="strategy-card">
+      <div class="strategy-icon">🏔️</div>
+      <div class="strategy-name">削峰填谷</div>
+      <div class="strategy-desc">離峰充電存電，尖峰放電少買貴電。降低契約容量費用。</div>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-icon">☀️</div>
+      <div class="strategy-name">自發自用</div>
+      <div class="strategy-desc">白天太陽能多餘 → 存進電池 → 傍晚自己用，減少買電。</div>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-icon">💹</div>
+      <div class="strategy-name">電力套利</div>
+      <div class="strategy-desc">低電價時買電充電，高電價時放電賣回，賺取價差。</div>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-icon">📡</div>
+      <div class="strategy-name">調頻服務（AFC）</div>
+      <div class="strategy-desc">台電電網頻率偏移時，毫秒級快速充放電，幫電網穩頻。可獲容量費。</div>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-icon">🚨</div>
+      <div class="strategy-name">備用容量</div>
+      <div class="strategy-desc">電池保留一定電量，停電時立即接手供電，不中斷關鍵設備。</div>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-icon">🌊</div>
+      <div class="strategy-name">再生能源平滑化</div>
+      <div class="strategy-desc">太陽能/風電出力忽大忽小，電池快速補償，讓輸出曲線平滑。</div>
+    </div>
+  </div>
+
+  <div class="tip-box box">
+    <div class="box-label">💡 AI EMS 的厲害之處</div>
+    <div class="box-text">
+      不是選「一個」策略，而是<strong style="color:var(--yellow)">同時執行多個策略</strong>，並找到最佳平衡點。<br>
+      例如：80% 容量做削峰填谷 + 20% 容量隨時待命做 AFC，兩個都賺。
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P9 通訊協定 ══════════════════════════════ -->
+<div class="slide" id="s8">
+  <div class="slide-title">📡 通訊協定速查</div>
+  <div class="slide-sub">EMS 要跟每個設備「說話」，每種設備說不同語言</div>
+
+  <div class="life-box box" style="margin-bottom:4px">
+    <div class="box-label">🌍 比喻</div>
+    <div class="box-text">
+      EMS 是聯合國大會，底下有中文、英文、法文、日文代表。<br>
+      每種通訊協定就是一種語言，EMS 要有翻譯官（Gateway）才能跟所有設備溝通。
+    </div>
+  </div>
+
+  <div class="proto-row">
+    <div class="proto-name">Modbus RTU/TCP</div>
+    <div class="proto-desc">最老牌的工控協定，幾乎所有傳統電表、PLC、儲能設備都支援。簡單穩定，但無加密。</div>
+    <div class="proto-badge">電表、PLC、逆變器</div>
+  </div>
+  <div class="proto-row">
+    <div class="proto-name">MQTT</div>
+    <div class="proto-desc">IoT 設備首選。輕量、低頻寬、支援 Pub/Sub 模式。感測器 → 雲端的標準通道。</div>
+    <div class="proto-badge">IoT感測器、雲端</div>
+  </div>
+  <div class="proto-row">
+    <div class="proto-name">OPC-UA</div>
+    <div class="proto-desc">工廠 SCADA 整合標準。安全性高、有語義模型，適合大型工廠 FEMS。</div>
+    <div class="proto-badge">工廠SCADA、DCS</div>
+  </div>
+  <div class="proto-row">
+    <div class="proto-name">OCPP 1.6 / 2.0.1</div>
+    <div class="proto-desc">充電樁管理專屬協定。EMS 透過 OCPP 控制充電樁的功率、啟停、費率。</div>
+    <div class="proto-badge">充電樁管理</div>
+  </div>
+  <div class="proto-row">
+    <div class="proto-name">OpenADR 2.0b</div>
+    <div class="proto-desc">台電需量反應信號標準。台電通知「請降載」，EMS 透過 OpenADR 接收並自動執行。</div>
+    <div class="proto-badge">需量反應、VPP</div>
+  </div>
+  <div class="proto-row">
+    <div class="proto-name">IEC 61850</div>
+    <div class="proto-desc">電力系統專用高可靠協定。變電站、大型儲能設備使用。即時性要求高。</div>
+    <div class="proto-badge">變電站、大型儲能</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span>實際 EMS 通訊架構（簡化）</span></div>
+    <div class="code-body"><span style="color:var(--text3)">現場設備</span>        <span style="color:var(--text3)">通訊協定</span>       <span style="color:var(--text3)">EMS 平台</span>
+電表/逆變器  ─Modbus TCP──▶
+充電樁       ─OCPP 2.0.1──▶  Edge Gateway  ─MQTT──▶  雲端 EMS
+IoT 感測器   ─MQTT────────▶
+台電 DR 信號 ─OpenADR─────────────────────────────▶ EMS 接收</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ P10 Quiz ══════════════════════════════ -->
+<div class="slide" id="s9">
+  <div class="slide-title">🧪 知識測驗</div>
+  <div class="slide-sub">測試一下你學到了什麼</div>
+
+  <div class="quiz-wrap" style="margin-bottom:12px">
+    <div class="quiz-q">Q1. 小美的工廠契約容量 200kW，某天尖峰用電飆到 260kW。台電的超約罰款是按什麼方式計算的？</div>
+    <div class="quiz-opts" id="q1opts">
+      <button class="quiz-opt" onclick="answer(this,'q1',false)">A. 超出 60kW × 電費單價（罰 1 倍）</button>
+      <button class="quiz-opt" onclick="answer(this,'q1',true)">B. 超出 60kW × 基本電費單價 × 2 倍罰則</button>
+      <button class="quiz-opt" onclick="answer(this,'q1',false)">C. 整月用電量全部加收 20%</button>
+      <button class="quiz-opt" onclick="answer(this,'q1',false)">D. 超過就直接跳電，不罰款</button>
+    </div>
+    <div class="quiz-feedback" id="q1fb"></div>
+  </div>
+
+  <div class="quiz-wrap" style="margin-bottom:12px">
+    <div class="quiz-q">Q2. EMS 四層架構中，「智慧電表」和「CT 電流勾」屬於哪一層？</div>
+    <div class="quiz-opts" id="q2opts">
+      <button class="quiz-opt" onclick="answer(this,'q2',false)">A. 通訊層</button>
+      <button class="quiz-opt" onclick="answer(this,'q2',true)">B. 感測層</button>
+      <button class="quiz-opt" onclick="answer(this,'q2',false)">C. 平台層</button>
+      <button class="quiz-opt" onclick="answer(this,'q2',false)">D. 應用層</button>
+    </div>
+    <div class="quiz-feedback" id="q2fb"></div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-q">Q3. 充電樁跟後台管理系統（CSMS）溝通，最主流的協定是？</div>
+    <div class="quiz-opts" id="q3opts">
+      <button class="quiz-opt" onclick="answer(this,'q3',false)">A. Modbus TCP</button>
+      <button class="quiz-opt" onclick="answer(this,'q3',false)">B. MQTT</button>
+      <button class="quiz-opt" onclick="answer(this,'q3',true)">C. OCPP</button>
+      <button class="quiz-opt" onclick="answer(this,'q3',false)">D. OpenADR</button>
+    </div>
+    <div class="quiz-feedback" id="q3fb"></div>
+  </div>
+</div>
+
+</div><!-- end main -->
+
+<div class="footer">
+  <button class="btn btn-prev" id="btnPrev" onclick="go(-1)" disabled>← 上一頁</button>
+  <div style="font-size:13px;color:var(--text3)" id="slideHint">封面</div>
+  <button class="btn btn-next" id="btnNext" onclick="go(1)">下一頁 →</button>
+</div>
+
+<script>
+const TOTAL = 10;
+let cur = 0;
+const hints = ['封面','故事引入','EMS 是什麼','四層架構','需量控制','削峰填谷','傳統 vs AI','六大策略','通訊協定','知識測驗'];
+
+function render(){
+  // slides
+  document.querySelectorAll('.slide').forEach((s,i)=>{
+    s.classList.remove('active','exit-left');
+  });
+  // dots
+  const dotsEl = document.getElementById('dots');
+  dotsEl.innerHTML = '';
+  for(let i=0;i<TOTAL;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===cur?' active':i<cur?' done':'');
+    dotsEl.appendChild(d);
+  }
+  // progress
+  document.getElementById('pfill').style.width = ((cur+1)/TOTAL*100)+'%';
+  document.getElementById('pnum').textContent = (cur+1)+' / '+TOTAL;
+  document.getElementById('slideHint').textContent = hints[cur]||'';
+  document.getElementById('btnPrev').disabled = cur===0;
+  document.getElementById('btnNext').disabled = cur===TOTAL-1;
+}
+
+function go(dir){
+  const slides = document.querySelectorAll('.slide');
+  slides[cur].classList.add(dir>0?'exit-left':'');
+  slides[cur].classList.remove('active');
+  cur = Math.max(0, Math.min(TOTAL-1, cur+dir));
+  setTimeout(()=>{
+    slides.forEach(s=>s.classList.remove('exit-left'));
+    slides[cur].classList.add('active');
+    render();
+  }, dir>0?0:0);
+  render();
+  if(cur===5) initChart();
+}
+
+// Quiz
+const feedbacks = {
+  q1: { ok:'✅ 正確！超約罰款 = 超出容量 × 基本電費 × 2 倍。所以才說 EMS 的削峰控制超級重要，一次超約可能罰好幾萬。', ng:'❌ 不對。台電對超約用電收 2 倍罰則，按超出的 kW 數 × 基本電費單價計算。' },
+  q2: { ok:'✅ 正確！感測層負責蒐集原始數據，智慧電表和 CT 電流勾都是前端感測設備。', ng:'❌ 不對。感測層才是蒐集數據的地方，電表和電流勾屬於感測層，不是通訊或平台層。' },
+  q3: { ok:'✅ 正確！OCPP（Open Charge Point Protocol）是充電樁管理的全球標準協定，1.6 和 2.0.1 是兩個版本。', ng:'❌ 不對。充電樁專屬的管理協定是 OCPP，Modbus 和 MQTT 是底層通訊，OpenADR 是需量反應用的。' }
+};
+
+function answer(btn, qid, correct){
+  const opts = document.querySelectorAll(`#${qid}opts .quiz-opt`);
+  opts.forEach(o=>{ o.disabled=true; o.style.cursor='default'; });
+  btn.classList.add(correct?'correct':'wrong');
+  if(!correct){
+    opts.forEach(o=>{ if(o.onclick.toString().includes('true')) o.classList.add('correct'); });
+  }
+  const fb = document.getElementById(qid+'fb');
+  fb.className = 'quiz-feedback '+(correct?'ok':'ng');
+  fb.textContent = feedbacks[qid][correct?'ok':'ng'];
+  fb.style.display = 'block';
+}
+
+function toggleLayer(card){
+  card.style.borderColor = card.style.borderColor === 'var(--blue-border)' ? '' : 'var(--blue-border)';
+}
+
+// Chart
+let chartInited = false;
+function initChart(){
+  if(chartInited) return;
+  chartInited = true;
+  const raw = [30,25,20,25,40,65,90,110,130,140,135,120,115,125,138,142,135,120,100,85,70,55,40,35];
+  const managed = [30,25,20,25,40,65,90,95,95,95,95,95,95,95,95,95,95,95,95,85,70,55,40,35];
+  const times = ['00','01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23'];
+  const maxVal = 150;
+  const chartH = 120;
+
+  const container = document.getElementById('chartBars');
+  container.innerHTML = '';
+  raw.forEach((v,i)=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'bar-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'bar bar-raw';
+    bar.style.height = (v/maxVal*chartH)+'px';
+    const val = document.createElement('div');
+    val.className = 'bar-val';
+    val.textContent = v;
+    val.style.display = 'none';
+    bar.appendChild(val);
+    const time = document.createElement('div');
+    time.className = 'bar-time';
+    time.textContent = (i%4===0)?times[i]:'';
+    wrap.appendChild(bar);
+    wrap.appendChild(time);
+    container.appendChild(wrap);
+  });
+
+  // contract line
+  const contractY = 1.25*16 + 16 + chartH - (100/maxVal*chartH);
+  document.getElementById('contractLine').style.top = (chartH - 100/maxVal*chartH + 26)+'px';
+}
+
+function showRaw(){
+  const raw = [30,25,20,25,40,65,90,110,130,140,135,120,115,125,138,142,135,120,100,85,70,55,40,35];
+  const maxVal = 150;
+  const chartH = 120;
+  const bars = document.querySelectorAll('#chartBars .bar');
+  bars.forEach((bar,i)=>{
+    bar.className = 'bar bar-raw';
+    bar.style.height = (raw[i]/maxVal*chartH)+'px';
+  });
+}
+
+function showManaged(){
+  const managed = [30,25,20,25,40,65,90,95,95,95,95,95,95,95,95,95,95,95,95,85,70,55,40,35];
+  const maxVal = 150;
+  const chartH = 120;
+  const bars = document.querySelectorAll('#chartBars .bar');
+  bars.forEach((bar,i)=>{
+    bar.className = 'bar bar-managed';
+    bar.style.height = (managed[i]/maxVal*chartH)+'px';
+  });
+}
+
+// keyboard
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ') go(1);
+  if(e.key==='ArrowLeft') go(-1);
+});
+
+render();
+</script>
+</body>
+</html>

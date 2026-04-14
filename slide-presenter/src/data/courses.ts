@@ -48,4 +48,16 @@ export const courses: readonly CourseInfo[] = [
     type: 'html',
     htmlPath: '/my-assistant/slides/fetch-api-practice.html',
   },
+  {
+    id: 'ai-ems',
+    title: 'AI 能源管理系統（EMS）',
+    subtitle: '用小明的停車場，搞懂削峰填谷、AI調度與通訊協定',
+    icon: '🧠',
+    slideId: 'ai-ems',
+    themeColor: 'sky',
+    tags: ['EMS', '能源管理', '微電網', '光充儲', 'AI調度'],
+    createdAt: '2026-04-14',
+    type: 'html',
+    htmlPath: '/my-assistant/slides/ai-ems.html',
+  },
 ]
