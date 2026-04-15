@@ -38,6 +38,7 @@ description: |
 | 蝦皮、Flow Lab、商品、SEO | `shopee-boss` |
 | IG、貼文、腳本、Reels | `content-creator` |
 | 程式、bug、架構、debug | `engineering:*` |
+| 複雜 coding、需要跑 terminal、多檔案修改 | `codex:codex-rescue` |
 | 輸出 Word / PDF / PPT / Excel | `docx` / `pdf` / `pptx` / `xlsx` |
 
 ---
@@ -68,6 +69,31 @@ Phase 3: Review → 整體回報 → 老闆驗收
     ↓
 合併 → 官方說法 / 正面 / 批評 / 綜合判斷
 ```
+
+---
+
+## 建立新 Skill 時
+
+複雜 skill 必須先寫 SPEC（規格書），老闆確認後才產出 SKILL.md。
+模板在 `references/spec-template.md`。
+
+簡單 skill（觸發明確、流程 < 5 步）可以跳過 SPEC 直接寫。
+
+---
+
+## 測試 Skill 品質
+
+修改或新建 skill 後，用 eval 流程驗證效果。
+指南在 `references/eval-guide.md`。
+
+---
+
+## References
+
+| 檔案 | 內容 |
+|------|------|
+| `references/spec-template.md` | 新 skill 設計規格書模板 |
+| `references/eval-guide.md` | skill 品質測試指南 |
 
 ---
 

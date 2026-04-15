@@ -2,3 +2,17 @@ node_modules/
 dist/
 .DS_Store
 *.local
+
+# 🚨 機密檔案（絕對不 commit）
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
