@@ -79,6 +79,22 @@ const theme = computed(() => {
       headerBg: 'from-purple-950 to-slate-900',
       accent: 'text-purple-400',
     },
+    yellow: {
+      progressBg: 'bg-yellow-900/30',
+      progressActive: 'bg-yellow-400',
+      nextBtn: 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400',
+      dotActive: 'bg-yellow-400',
+      headerBg: 'from-yellow-950 to-slate-900',
+      accent: 'text-yellow-400',
+    },
+    red: {
+      progressBg: 'bg-red-900/30',
+      progressActive: 'bg-red-400',
+      nextBtn: 'bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-400 hover:to-rose-400',
+      dotActive: 'bg-red-400',
+      headerBg: 'from-red-950 to-slate-900',
+      accent: 'text-red-400',
+    },
   }
   return themes[props.themeColor]
 })
