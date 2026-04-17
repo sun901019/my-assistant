@@ -32,6 +32,6 @@ export interface CourseInfo {
   readonly htmlPath?: string
 }
 
-export type ThemeColor = 'amber' | 'sky' | 'emerald' | 'purple'
+export type ThemeColor = 'amber' | 'sky' | 'emerald' | 'purple' | 'yellow' | 'red'
 
 export type FeedbackType = 'neutral' | 'success' | 'error'
