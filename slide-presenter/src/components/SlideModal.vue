@@ -17,6 +17,15 @@ const slideComponents: Record<string, ReturnType<typeof defineAsyncComponent>> =
   'demo-what-is-api': defineAsyncComponent(
     () => import('../slides/DemoWhatIsApiSlide.vue')
   ),
+  'energy-basics': defineAsyncComponent(
+    () => import('../slides/EnergyBasicsSlide.vue')
+  ),
+  'v2g-what-is': defineAsyncComponent(
+    () => import('../slides/V2GWhatIsSlide.vue')
+  ),
+  'v2g-business-model': defineAsyncComponent(
+    () => import('../slides/V2GBusinessModelSlide.vue')
+  ),
 }
 
 const slideComponent = computed(() => slideComponents[props.slideId] ?? null)
