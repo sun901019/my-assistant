@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref } from 'vue'
+import { computed, defineAsyncComponent, ref, shallowRef, onMounted } from 'vue'
+import type { SlideJSON } from '../types/slide-json'
+import JsonSlideRenderer from './JsonSlideRenderer.vue'
 
 interface Props {
   slideId: string
@@ -11,8 +13,7 @@ const emit = defineEmits<{ close: [] }>()
 
 const isMobile = ref(window.innerWidth < 768)
 
-// Dynamic slide component registry
-// Each new slide gets registered here
+// Vue component slides registry
 const slideComponents: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   'demo-what-is-api': defineAsyncComponent(
     () => import('../slides/DemoWhatIsApiSlide.vue')
@@ -28,12 +29,23 @@ const slideComponents: Record<string, ReturnType<typeof defineAsyncComponent>> =
   ),
 }
 
+// JSON slide data
+const jsonSlideData = shallowRef<SlideJSON | null>(null)
+const isJson = computed(() => !(props.slideId in slideComponents))
+
+onMounted(async () => {
+  if (!isJson.value) return
+  try {
+    const mod = await import(`../data/slides/${props.slideId}.json`)
+    jsonSlideData.value = mod.default as SlideJSON
+  } catch {
+    jsonSlideData.value = null
+  }
+})
+
 const slideComponent = computed(() => slideComponents[props.slideId] ?? null)
 
-function handleClose() {
-  emit('close')
-}
-
+function handleClose() { emit('close') }
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') handleClose()
 }
@@ -47,7 +59,6 @@ function handleKeydown(e: KeyboardEvent) {
       @keydown="handleKeydown"
     >
       <div class="w-full h-full md:w-[95%] md:h-[92%] md:rounded-2xl overflow-hidden shadow-2xl bg-slate-900">
-        <!-- Close button -->
         <button
           class="absolute top-3 right-3 md:top-4 md:right-4 z-50 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all"
           @click="handleClose"
@@ -55,15 +66,24 @@ function handleKeydown(e: KeyboardEvent) {
           ✕
         </button>
 
-        <!-- Dynamic slide content -->
+        <!-- Vue component slides -->
         <component
-          v-if="slideComponent"
+          v-if="!isJson && slideComponent"
           :is="slideComponent"
           :is-mobile="isMobile"
           @complete="handleClose"
         />
+
+        <!-- JSON-driven slides -->
+        <JsonSlideRenderer
+          v-else-if="isJson && jsonSlideData"
+          :slide-data="jsonSlideData"
+          :is-mobile="isMobile"
+          @complete="handleClose"
+        />
+
         <div v-else class="flex items-center justify-center h-full text-white/50">
-          找不到簡報：{{ slideId }}
+          {{ isJson ? '載入中…' : `找不到簡報：${slideId}` }}
         </div>
       </div>
     </div>

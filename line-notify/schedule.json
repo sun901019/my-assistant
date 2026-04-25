@@ -1,0 +1,59 @@
+{
+  "events": [
+    {
+      "id": "evt-001",
+      "date": "2026-05-07",
+      "time": "09:00",
+      "title": "博覽會 2 分鐘報告",
+      "priority": "high",
+      "note": "800萬核准關鍵場",
+      "done": false
+    },
+    {
+      "id": "evt-002",
+      "date": "2026-04-25",
+      "time": "18:00",
+      "title": "V2G 月報截止",
+      "priority": "normal",
+      "note": "小眉正在幫你起草中",
+      "done": false
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-001",
+      "title": "能源系列簡報製作（7張）",
+      "status": "in_progress",
+      "note": "3/7 完成",
+      "done_at": null
+    },
+    {
+      "id": "task-002",
+      "title": "slide-presenter JSON 引擎設計",
+      "status": "in_progress",
+      "note": "Claude 實作中",
+      "done_at": null
+    },
+    {
+      "id": "task-003",
+      "title": "V2G 研究知識庫建立",
+      "status": "done",
+      "note": "",
+      "done_at": "2026-04-25"
+    },
+    {
+      "id": "task-004",
+      "title": "_shared 跨專案知識庫完成",
+      "status": "done",
+      "note": "",
+      "done_at": "2026-04-25"
+    },
+    {
+      "id": "task-005",
+      "title": "LINE 通知系統建立",
+      "status": "in_progress",
+      "note": "",
+      "done_at": null
+    }
+  ]
+}

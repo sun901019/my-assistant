@@ -1,0 +1,144 @@
+{
+  "id": "api-basics-json",
+  "title": "API 是什麼？",
+  "subtitle": "用餐廳點餐，搞懂 API 的核心邏輯",
+  "icon": "🍽️",
+  "theme": "sky",
+  "steps": [
+    {
+      "type": "welcome",
+      "title": "開場",
+      "desc": "你每天都在用 API",
+      "icon": "🔌",
+      "headline": "API，你每天都在用",
+      "subheadline": "手機叫車、查天氣、刷 IG，背後都是 API 在運作",
+      "features": [
+        { "icon": "🚗", "text": "Uber 叫車" },
+        { "icon": "☁️", "text": "天氣 App" },
+        { "icon": "📸", "text": "IG 登入" }
+      ],
+      "footer": "5 分鐘，徹底搞懂 👇"
+    },
+    {
+      "type": "analogy",
+      "title": "API 的核心比喻",
+      "desc": "把程式世界對應到生活",
+      "conceptLabel": "程式世界",
+      "realLabel": "餐廳點餐",
+      "pairs": [
+        { "concept": "你的 App", "real": "客人", "icon": "👤" },
+        { "concept": "API", "real": "服務生", "icon": "🧑‍🍳" },
+        { "concept": "後端伺服器", "real": "廚房", "icon": "🍳" },
+        { "concept": "Request", "real": "點餐單", "icon": "📋" },
+        { "concept": "Response", "real": "上菜", "icon": "🍜" }
+      ],
+      "note": "你不需要知道廚房怎麼煮菜，只要告訴服務生你要什麼。API 就是那個服務生。"
+    },
+    {
+      "type": "cards",
+      "title": "API 的三個基本元素",
+      "desc": "Request / Response / Endpoint",
+      "cards": [
+        {
+          "icon": "📤",
+          "title": "Request（請求）",
+          "subtitle": "你發出去的訊息",
+          "body": "你告訴 API：我要什麼資料、用什麼方式拿（GET/POST）",
+          "color": "sky"
+        },
+        {
+          "icon": "📥",
+          "title": "Response（回應）",
+          "subtitle": "伺服器回傳的資料",
+          "body": "API 回給你 JSON 格式的資料，通常包含狀態碼（200=成功、404=找不到）",
+          "color": "emerald"
+        },
+        {
+          "icon": "🔗",
+          "title": "Endpoint（端點）",
+          "subtitle": "API 的地址",
+          "body": "一個 URL 就是一個端點，例如 /users/123 代表「編號 123 的用戶資料」",
+          "color": "purple"
+        }
+      ]
+    },
+    {
+      "type": "selector",
+      "title": "HTTP 方法比較",
+      "desc": "GET / POST / PUT / DELETE",
+      "prompt": "點一個方法，看看它在做什麼",
+      "options": [
+        {
+          "key": "get",
+          "icon": "👀",
+          "label": "GET — 查詢",
+          "details": [
+            { "label": "動作", "value": "只讀取", "color": "sky" },
+            { "label": "資料放哪", "value": "URL 參數" },
+            { "label": "安全性", "value": "高（不改資料）" }
+          ],
+          "note": "例：查詢商品列表 GET /products"
+        },
+        {
+          "key": "post",
+          "icon": "➕",
+          "label": "POST — 新增",
+          "details": [
+            { "label": "動作", "value": "新增資料", "color": "emerald" },
+            { "label": "資料放哪", "value": "Request Body" },
+            { "label": "使用場景", "value": "提交表單、下訂單" }
+          ],
+          "note": "例：新增商品 POST /products"
+        },
+        {
+          "key": "delete",
+          "icon": "🗑️",
+          "label": "DELETE — 刪除",
+          "details": [
+            { "label": "動作", "value": "刪除資料", "color": "red" },
+            { "label": "資料放哪", "value": "URL 路徑" },
+            { "label": "使用場景", "value": "取消訂單、刪貼文" }
+          ],
+          "note": "例：刪除商品 DELETE /products/123"
+        }
+      ]
+    },
+    {
+      "type": "quiz",
+      "title": "小測驗",
+      "desc": "確認你真的懂了",
+      "question": "🧪 你在 App 上查看自己的訂單歷史，背後用的是哪個 HTTP 方法？",
+      "options": [
+        { "value": "GET",    "label": "👀 GET — 查詢" },
+        { "value": "POST",   "label": "➕ POST — 新增" },
+        { "value": "DELETE", "label": "🗑️ DELETE — 刪除" },
+        { "value": "PUT",    "label": "✏️ PUT — 修改" }
+      ],
+      "correctAnswer": "GET",
+      "successMsg": "✅ 答對！查詢資料用 GET，不修改任何東西，所以最安全。",
+      "errorMsg": "❌ 再想想：你只是「看」訂單，沒有新增、修改、刪除任何東西。"
+    },
+    {
+      "type": "summary",
+      "title": "總結",
+      "desc": "把今天學到的收起來",
+      "icon": "🎉",
+      "headline": "API，搞定！",
+      "points": [
+        {
+          "color": "sky",
+          "text": "<strong class='text-sky-300'>API = 服務生</strong>：你（App）跟廚房（伺服器）之間的溝通橋樑，你不需要知道後面怎麼運作"
+        },
+        {
+          "color": "emerald",
+          "text": "每次溝通都是 <strong class='text-emerald-300'>Request → Response</strong>：你發送請求，伺服器回傳資料（通常是 JSON）"
+        },
+        {
+          "color": "purple",
+          "text": "四種方法記好：<strong class='text-purple-300'>GET 查 / POST 建 / PUT 改 / DELETE 刪</strong>，對應 CRUD 四個基本操作"
+        }
+      ],
+      "nextHint": "下一步：試著用 fetch() 呼叫一個真實的 API →"
+    }
+  ]
+}

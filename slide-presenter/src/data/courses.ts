@@ -2,6 +2,16 @@ import type { CourseInfo } from '../types/slide'
 
 export const courses: readonly CourseInfo[] = [
   {
+    id: 'api-basics-json',
+    title: 'API 是什麼？',
+    subtitle: '用餐廳點餐，搞懂 API 的核心邏輯',
+    icon: '🍽️',
+    slideId: 'api-basics-json',
+    themeColor: 'sky',
+    tags: ['程式基礎', '後端'],
+    createdAt: '2026-04-25',
+  },
+  {
     id: 'demo-what-is-api',
     title: 'API 是什麼？',
     subtitle: '用餐廳點餐來理解 API 的概念',
