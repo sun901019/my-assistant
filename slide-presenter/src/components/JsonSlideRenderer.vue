@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import type { SlideJSON, AnyJsonStep } from '../types/slide-json'
-import type { FeedbackType } from '../types/slide'
 import InteractiveSlideTemplate from './InteractiveSlideTemplate.vue'
 import WelcomeStep from './steps/WelcomeStep.vue'
 import CardsStep from './steps/CardsStep.vue'
