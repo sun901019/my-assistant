@@ -1,6 +1,15 @@
 {
   "events": [
     {
+      "id": "evt-003",
+      "date": "2026-05-29",
+      "time": "13:30",
+      "title": "台大＋國科會定期計畫進度會議",
+      "priority": "high",
+      "note": "視訊會議，13:30–15:30",
+      "done": false
+    },
+    {
       "id": "evt-001",
       "date": "2026-05-07",
       "time": "09:00",
@@ -30,9 +39,9 @@
     {
       "id": "task-002",
       "title": "slide-presenter JSON 引擎設計",
-      "status": "in_progress",
-      "note": "Claude 實作中",
-      "done_at": null
+      "status": "done",
+      "note": "7 step 元件 + JsonSlideRenderer + courses.ts 接線完成",
+      "done_at": "2026-04-27"
     },
     {
       "id": "task-003",
@@ -51,9 +60,9 @@
     {
       "id": "task-005",
       "title": "LINE 通知系統建立",
-      "status": "in_progress",
-      "note": "",
-      "done_at": null
+      "status": "done",
+      "note": "早晚報 + LaunchAgent 全完成",
+      "done_at": "2026-04-27"
     }
   ]
 }

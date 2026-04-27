@@ -46,7 +46,7 @@ def build_morning(schedule: dict) -> str:
     yesterday = today - timedelta(days=1)
     lines: list[str] = []
 
-    lines.append(f"📅 李老闆早報 — {format_date_header(today)}")
+    lines.append(f"📅 老闆早報 — {format_date_header(today)}")
     lines.append("")
 
     # 今日行程
@@ -114,7 +114,7 @@ def build_evening(schedule: dict) -> str:
     tomorrow = today + timedelta(days=1)
     lines: list[str] = []
 
-    lines.append(f"🌙 胖陽晚報 — {format_date_header(today)}")
+    lines.append(f"🌙 老闆晚報 — {format_date_header(today)}")
     lines.append("")
 
     # 今日完成

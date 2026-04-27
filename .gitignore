@@ -16,3 +16,12 @@ __pycache__/
 *.pyo
 .venv/
 venv/
+
+# Runtime logs
+*.log
+
+# Codex task files (temp)
+.ai/
+
+# Git worktrees (temp)
+.claude/worktrees/

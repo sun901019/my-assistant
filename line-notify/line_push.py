@@ -12,15 +12,18 @@ from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 
 import httpx
 
-# 嘗試載入 .env（若有裝 python-dotenv）
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass  # 沒裝 python-dotenv 也可以，假設環境變數已在 shell 設定
+# 從腳本自己的目錄載入 .env（不依賴 python-dotenv）
+_env_file = Path(__file__).parent / ".env"
+if _env_file.exists():
+    for _line in _env_file.read_text(encoding="utf-8").splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _, _v = _line.partition("=")
+            os.environ.setdefault(_k.strip(), _v.strip())
 
 # 從環境變數讀取
 LINE_USER_ID = os.getenv("LINE_USER_ID", "")
