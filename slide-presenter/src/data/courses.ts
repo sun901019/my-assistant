@@ -139,4 +139,16 @@ export const courses: readonly CourseInfo[] = [
     createdAt: '2026-04-17',
     type: 'vue',
   },
+  {
+    id: 'line-notify-tutorial',
+    title: 'LINE 每日推播系統設定',
+    subtitle: '從申請 Token 到自動排程，完整串起來',
+    icon: '💬',
+    slideId: 'line-notify-tutorial',
+    themeColor: 'emerald',
+    tags: ['LINE Notify', 'Python', 'LaunchAgent', '自動化'],
+    createdAt: '2026-04-27',
+    type: 'html',
+    htmlPath: '/my-assistant/slides/line-notify-tutorial.html',
+  },
 ]
