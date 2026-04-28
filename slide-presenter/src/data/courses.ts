@@ -151,4 +151,16 @@ export const courses: readonly CourseInfo[] = [
     type: 'html',
     htmlPath: '/my-assistant/slides/line-notify-tutorial.html',
   },
+  {
+    id: 'microgrid-concepts',
+    title: '微電網核心概念速覽',
+    subtitle: '用生活比喻搞懂：孤島、VSG、Grid-Forming、TOU、PCC',
+    icon: '⚡',
+    slideId: 'microgrid-concepts',
+    themeColor: 'emerald',
+    tags: ['微電網', 'V2G', '孤島模式', 'VSG', 'TOU', 'EMS'],
+    createdAt: '2026-04-28',
+    type: 'html',
+    htmlPath: '/my-assistant/slides/microgrid-concepts.html',
+  },
 ]

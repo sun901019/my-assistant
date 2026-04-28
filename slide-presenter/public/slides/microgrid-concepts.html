@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>微電網核心概念速覽</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--bg4:#2d333b;
+  --border:#30363d;--border2:#3d444d;
+  --text:#e6edf3;--text2:#c9d1d9;--text3:#8b949e;--text4:#6e7681;
+  --blue:#58a6ff;--blue-bg:#0d1926;--blue-border:#388bfd;
+  --green:#3fb950;--green-bg:#0d2818;--green-border:#238636;
+  --red:#f85149;--red-bg:#2d1a1a;--red-border:#da3633;
+  --yellow:#e3b341;--yellow-bg:#2d2100;--yellow-border:#9e6a03;
+  --purple:#d2a8ff;--purple-bg:#1a1030;--purple-border:#8957e5;
+  --orange:#ffa657;
+}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.h-left{display:flex;align-items:center;gap:12px}
+.h-badge{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.05em}
+.h-title{font-size:16px;font-weight:700;color:var(--text)}
+.h-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.h-right{display:flex;align-items:center;gap:14px}
+.progress-bar{width:180px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:2px;transition:width 0.4s cubic-bezier(.4,0,.2,1)}
+.page-num{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;min-width:48px;text-align:right}
+.dots{display:flex;gap:4px;align-items:center}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--border2);transition:all 0.3s}
+.dot.active{background:var(--green);width:16px;border-radius:3px}
+.dot.done{background:var(--green);opacity:0.4}
+
+.main{flex:1;overflow:hidden;position:relative}
+.slide{position:absolute;inset:0;padding:1.75rem 3rem;display:flex;flex-direction:column;gap:1.1rem;opacity:0;transform:translateX(40px);transition:all 0.35s cubic-bezier(.4,0,.2,1);pointer-events:none;overflow-y:auto}
+.slide.active{opacity:1;transform:translateX(0);pointer-events:all}
+.slide.exit-left{opacity:0;transform:translateX(-40px)}
+.slide::-webkit-scrollbar{width:4px}
+.slide::-webkit-scrollbar-track{background:transparent}
+.slide::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+.footer{background:var(--bg2);border-top:1px solid var(--border);padding:0 3rem;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.btn{padding:8px 24px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:'Noto Sans TC',sans-serif;transition:all 0.15s}
+.btn-prev{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+.btn-prev:hover:not(:disabled){background:var(--border);color:var(--text)}
+.btn-next{background:#1a4a2e;color:var(--green);border:1px solid var(--green-border)}
+.btn-next:hover:not(:disabled){background:var(--green-bg);border-color:var(--green)}
+.btn:disabled{opacity:0.3;cursor:not-allowed}
+
+.slide-title{font-size:26px;font-weight:700;color:var(--text);line-height:1.2}
+.slide-title-sm{font-size:20px;font-weight:700;color:var(--text)}
+.slide-sub{font-size:14px;color:var(--text3);margin-top:-0.6rem}
+
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+
+.topic-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;text-align:center;transition:all 0.2s}
+.topic-card:hover{transform:translateY(-2px)}
+.topic-icon{font-size:26px;margin-bottom:8px}
+.topic-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.topic-desc{font-size:12px;color:var(--text3)}
+
+.box{border-radius:10px;padding:1rem 1.25rem}
+.box-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.box-text{font-size:14px;line-height:1.7}
+.life-box{background:var(--green-bg);border:1px solid var(--green-border)}
+.life-box .box-label{color:var(--green)}
+.life-box .box-text{color:#aff5b4}
+.trap-box{background:var(--red-bg);border:1px solid var(--red-border)}
+.trap-box .box-label{color:var(--red)}
+.trap-box .box-text{color:#ffa198}
+.info-box{background:var(--blue-bg);border:1px solid var(--blue-border)}
+.info-box .box-label{color:var(--blue)}
+.info-box .box-text{color:#a5c8ff}
+.tip-box{background:var(--yellow-bg);border:1px solid var(--yellow-border)}
+.tip-box .box-label{color:var(--yellow)}
+.tip-box .box-text{color:#f0c96e}
+.purple-box{background:var(--purple-bg);border:1px solid var(--purple-border)}
+.purple-box .box-label{color:var(--purple)}
+.purple-box .box-text{color:#e2ccff}
+
+.code-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.code-header{background:var(--bg3);padding:8px 14px;font-size:12px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.code-body{padding:1.1rem 1.25rem;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text2);white-space:pre;line-height:1.9;overflow-x:auto}
+
+.compare-table{width:100%;border-collapse:collapse;font-size:13px}
+.compare-table th{background:var(--bg3);color:var(--text3);padding:10px 14px;text-align:left;font-weight:600;border-bottom:1px solid var(--border)}
+.compare-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:top}
+.compare-table tr:last-child td{border-bottom:none}
+.compare-table tr:hover td{background:var(--bg2)}
+
+.hl{color:var(--orange);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-g{color:var(--green);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-b{color:var(--blue);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-r{color:var(--red);font-family:'JetBrains Mono',monospace;font-size:13px}
+.hl-y{color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:13px}
+
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono',monospace;letter-spacing:.04em}
+.tag-g{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.tag-r{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.tag-b{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+
+.formula-box{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:1rem 1.5rem;font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text);text-align:center;line-height:2.2}
+
+.state-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.state-card{border-radius:10px;padding:1rem;border:1px solid}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="h-left">
+    <div class="h-badge">微電網 × V2G</div>
+    <div>
+      <div class="h-title">微電網核心概念速覽</div>
+      <div class="h-sub">用生活比喻搞懂：孤島、VSG、Grid-Forming、TOU、PCC</div>
+    </div>
+  </div>
+  <div class="h-right">
+    <div class="dots" id="dots"></div>
+    <div class="progress-bar"><div class="progress-fill" id="pfill" style="width:12.5%"></div></div>
+    <div class="page-num" id="pnum">1 / 8</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- S1 封面 -->
+<div class="slide active" id="s1">
+  <div class="slide-title">⚡ 微電網核心概念速覽</div>
+  <div class="slide-sub">六個名詞，六個生活比喻，一次搞清楚</div>
+  <div class="grid-3">
+    <div class="topic-card" style="border-color:var(--green-border)">
+      <div class="topic-icon">🏠</div>
+      <div class="topic-name" style="color:var(--green)">微電網</div>
+      <div class="topic-desc">社區自備水塔</div>
+    </div>
+    <div class="topic-card" style="border-color:var(--blue-border)">
+      <div class="topic-icon">🏝️</div>
+      <div class="topic-name" style="color:var(--blue)">孤島模式</div>
+      <div class="topic-desc">荒島上的露營</div>
+    </div>
+    <div class="topic-card" style="border-color:var(--border2)">
+      <div class="topic-icon">🎼</div>
+      <div class="topic-name" style="color:var(--text2)">Grid-Forming/Following</div>
+      <div class="topic-desc">指揮 vs 樂手</div>
+    </div>
+    <div class="topic-card" style="border-color:var(--purple-border)">
+      <div class="topic-icon">🌀</div>
+      <div class="topic-name" style="color:var(--purple)">VSG</div>
+      <div class="topic-desc">虛擬大陀螺</div>
+    </div>
+    <div class="topic-card" style="border-color:var(--yellow-border)">
+      <div class="topic-icon">💰</div>
+      <div class="topic-name" style="color:var(--yellow)">TOU 時間電價</div>
+      <div class="topic-desc">計程車尖峰加價</div>
+    </div>
+    <div class="topic-card" style="border-color:var(--orange)" style="border-color:var(--border2)">
+      <div class="topic-icon">🚪</div>
+      <div class="topic-name" style="color:var(--orange)">PCC</div>
+      <div class="topic-desc">社區大門電錶</div>
+    </div>
+  </div>
+  <div class="info-box box">
+    <div class="box-label">這些名詞在哪裡出現</div>
+    <div class="box-text">V2G 研究、微電網論文、明志科大三個本地系統（Lab 126 EMS / PV 維運平台 / 校園 EMS）的 API 資料中，這六個概念反覆出現。搞懂它們，就能讀懂系統在做什麼。</div>
+  </div>
+</div>
+
+<!-- S2 微電網 -->
+<div class="slide" id="s2">
+  <div class="slide-title-sm">🏠 微電網（Microgrid）</div>
+  <div class="info-box box">
+    <div class="box-label">技術定義</div>
+    <div class="box-text">包含分散式能源（DER）、儲能（BESS）、負載的小型電力系統，透過 <span class="hl-g">PCC</span> 連接台電大電網，也能在大電網故障時<strong style="color:var(--blue)">獨立運作</strong>（孤島模式）。</div>
+  </div>
+  <div class="life-box box">
+    <div class="box-label">🏠 生活比喻：社區自備水塔</div>
+    <div class="box-text">
+      大樓平常接台北自來水（台電），但屋頂還有一個大水塔（BESS）和集雨系統（太陽能）。<br><br>
+      <strong style="color:#aff5b4">颱風停水</strong>時，切斷自來水管，靠水塔撐到復水。<br><br>
+      <strong style="color:#aff5b4">微電網 = 有自己水塔的建築，停電也不怕。</strong>
+    </div>
+  </div>
+  <div class="state-grid">
+    <div class="state-card" style="background:var(--green-bg);border-color:var(--green-border)">
+      <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:6px">🟢 並網模式（正常）</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7">PCC 開，用台電電<br>太陽能多餘 → 存進 BESS<br>離峰便宜 → BESS 充電</div>
+    </div>
+    <div class="state-card" style="background:var(--blue-bg);border-color:var(--blue-border)">
+      <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:6px">🔵 孤島模式（停電）</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7">PCC 關，靠 BESS + PV<br>BESS 啟動 VSG 模式<br>自建 60Hz 頻率參考</div>
+    </div>
+  </div>
+  <div class="tip-box box">
+    <div class="box-label">三個核心要素</div>
+    <div class="box-text"><span class="hl-g">PCC</span>（那道門） ＋ <span class="hl-b">BESS</span>（水塔） ＋ <span class="hl">EMS</span>（智慧管理大腦）= 完整微電網</div>
+  </div>
+</div>
+
+<!-- S3 孤島模式 -->
+<div class="slide" id="s3">
+  <div class="slide-title-sm">🏝️ 孤島模式（Islanding）</div>
+  <div class="life-box box">
+    <div class="box-label">🏝️ 生活比喻：荒島上的露營</div>
+    <div class="box-text">
+      颱風來了，橋斷了（PCC 斷開），你和台電隔離。<br><br>
+      ✅ 有帳篷＋糧食＋水（有 BESS ＋ VSG）→ 孤島上也能活<br>
+      ❌ 什麼都沒有（無儲能）→ 完蛋
+    </div>
+  </div>
+  <div class="trap-box box">
+    <div class="box-label">⚠️ 孤島的安全威脅（為什麼要偵測）</div>
+    <div class="box-text">
+      電工去外面修電線，以為已經停電了，結果你家太陽能還在偷偷供電給那條線 → <strong style="color:var(--red)">電工觸電身亡</strong><br><br>
+      因此 <span class="hl-r">IEEE 1547</span> 規定：大電網斷電後，逆變器必須在 <strong style="color:var(--red)">2 秒內停止輸出</strong>（除非你有合法的孤島控制設計）。
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="info-box box">
+      <div class="box-label">規則法（OFP/OUV）</div>
+      <div class="box-text">頻率/電壓超閾值才觸發<br>NDZ（漏偵率）= <span class="hl-r">17.9%</span><br><span style="color:var(--text3);font-size:12px">有 17.9% 的孤島事件偵測不到</span></div>
+    </div>
+    <div class="life-box box">
+      <div class="box-label">XGBoost（明志 3/28 突破）</div>
+      <div class="box-text">特徵：<span class="hl-g">freq_std_5m</span>（5 分鐘頻率標準差）<br>NDZ = <strong style="color:#aff5b4">0%</strong><br><span style="color:#aff5b4;font-size:12px">完全消除漏偵，Tesla 孤島充電才成為可能</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- S4 Grid-Following vs Grid-Forming -->
+<div class="slide" id="s4">
+  <div class="slide-title-sm">🎼 Grid-Following vs Grid-Forming</div>
+  <div class="life-box box">
+    <div class="box-label">🎼 生活比喻：樂手 vs 指揮</div>
+    <div class="box-text">
+      <strong style="color:#aff5b4">Grid-Following = 樂手</strong>：跟著指揮（台電）的節拍打，很準，但指揮消失（停電）→ 整個樂團停頓，不知道該打什麼節拍。<br><br>
+      <strong style="color:#aff5b4">Grid-Forming = 指揮</strong>：自己定節拍，帶著大家走。停電時拿起指揮棒，建立 60Hz，讓其他設備繼續跟著跑。
+    </div>
+  </div>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>特性</th>
+        <th style="color:var(--text3)">Grid-Following（樂手）</th>
+        <th style="color:var(--green)">Grid-Forming（指揮）</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="color:var(--text3)">頻率來源</td>
+        <td>跟著台電的節拍</td>
+        <td style="color:var(--green)">自己建立 60Hz 參考</td>
+      </tr>
+      <tr>
+        <td style="color:var(--text3)">孤島能力</td>
+        <td><span class="tag tag-r">✗ 不行</span></td>
+        <td><span class="tag tag-g">✓ 可以</span></td>
+      </tr>
+      <tr>
+        <td style="color:var(--text3)">控制複雜度</td>
+        <td>低（PLL 同步）</td>
+        <td>高（VSG / Droop 算法）</td>
+      </tr>
+      <tr>
+        <td style="color:var(--text3)">典型用途</td>
+        <td>一般並網太陽能 / BESS</td>
+        <td>儲能主力、V2G 雙向逆變器</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="info-box box">
+    <div class="box-label">明志科大的情境</div>
+    <div class="box-text">平常並網 → Grid-Following（跟台電）；停電孤島 → BESS 切換到 Grid-Forming（VSG 模式），BESS 變臨時指揮。</div>
+  </div>
+</div>
+
+<!-- S5 VSG -->
+<div class="slide" id="s5">
+  <div class="slide-title-sm">🌀 VSG（Virtual Synchronous Generator）</div>
+  <div class="life-box box">
+    <div class="box-label">🌀 生活比喻：大陀螺 vs 小陀螺</div>
+    <div class="box-text">
+      傳統火力發電機 = 幾噸重的<strong style="color:#aff5b4">大陀螺</strong>，轉速很難突然改變 → 這叫「慣量（inertia）」。負載突然變大，頻率緩慢降，不會瞬間崩潰。<br><br>
+      太陽能 + BESS 的逆變器 = <strong style="color:var(--red)">小陀螺</strong>，電子設備，沒有物理慣量，負載一變輸出立刻跳 → 頻率不穩定。<br><br>
+      <strong style="color:#aff5b4">VSG = 用程式碼在 BESS 裡模擬那顆重陀螺</strong>，讓頻率變化平滑。
+    </div>
+  </div>
+  <div class="formula-box">
+    <div style="color:var(--text3);font-size:11px;letter-spacing:.08em;margin-bottom:8px">VSG 核心公式（擺動方程式）</div>
+    <span style="color:var(--purple)">J</span> · <span style="color:var(--text)">dω/dt</span> = <span style="color:var(--green)">Tm</span> - <span style="color:var(--red)">Te</span> - <span style="color:var(--blue)">D</span>·(<span style="color:var(--text)">ω - ω₀</span>)
+    <div style="font-size:12px;color:var(--text3);margin-top:10px;font-family:'Noto Sans TC',sans-serif;line-height:1.9">
+      <span style="color:var(--purple)">J</span> = 虛擬轉動慣量 &nbsp;｜&nbsp; <span style="color:var(--blue)">D</span> = 阻尼係數 &nbsp;｜&nbsp; <span style="color:var(--green)">Tm</span> = 機械力矩 &nbsp;｜&nbsp; <span style="color:var(--red)">Te</span> = 電磁力矩
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="purple-box box">
+      <div class="box-label">VSG vs Droop Control 差別</div>
+      <div class="box-text">Droop Control：有稱差，<span class="hl-r">無慣量</span>（不模擬擺動方程式）<br>VSG：有稱差 ＋ <span class="hl-g">有虛擬慣量</span>（同時模擬），頻率響應更像傳統發電機</div>
+    </div>
+    <div class="info-box box">
+      <div class="box-label">明志的 VSG 應用</div>
+      <div class="box-text">3/11 停電意外 → 3/16 孤島實驗啟動 → BESS 以 VSG 模式撐住孤島 → 3/30 Tesla Model Y 在孤島模式下充電成功（V2G 前置驗證）</div>
+    </div>
+  </div>
+</div>
+
+<!-- S6 TOU + V2G 套利 -->
+<div class="slide" id="s6">
+  <div class="slide-title-sm">💰 TOU 時間電價 × V2G 套利</div>
+  <div class="life-box box">
+    <div class="box-label">🚕 生活比喻：計程車尖峰加價</div>
+    <div class="box-text">就像 Uber 下班時間加價，TOU 電費就是「什麼時間用電，決定你付多少錢」。白天用電高峰貴、半夜便宜。</div>
+  </div>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>時段</th>
+        <th>夏月（6–9 月）</th>
+        <th style="color:var(--green)">非夏月（10–5 月）</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="color:var(--red)">尖峰（平日 7:30–22:30）</td>
+        <td style="color:var(--red)">6.99 元/度</td>
+        <td style="color:var(--yellow)">4.78 元/度</td>
+      </tr>
+      <tr>
+        <td style="color:var(--green)">離峰（其餘時間）</td>
+        <td style="color:var(--green)">1.96 元/度</td>
+        <td style="color:var(--green)">1.85 元/度</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="tip-box box">
+    <div class="box-label">💡 V2G 套利計算（非夏月）</div>
+    <div class="box-text">
+      <span style="display:block;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:2.2">
+        半夜 <span class="hl-g">1.96 元</span> 充電 → 下午 <span class="hl-y">4.78 元</span> 放回電網<br>
+        淨收益 = 4.78 − (1.96 ÷ 0.90<span style="color:var(--text3)">效率</span>) = <strong style="color:var(--yellow)">2.60 元/度</strong><br>
+        一台車 30 kWh 可用容量 → <strong style="color:var(--orange)">NT$78 / session</strong>
+      </span>
+    </div>
+  </div>
+  <div class="info-box box">
+    <div class="box-label">真實案例（澳洲）</div>
+    <div class="box-text">車主在電價飆到每度 20 澳元時，兩小時內放電賺了 560 澳元。平均每年可省/賺約 1,000 澳元。<span style="color:var(--text3);font-size:12px">（來源：ARENA 2024 V2G 研究）</span></div>
+  </div>
+</div>
+
+<!-- S7 PCC -->
+<div class="slide" id="s7">
+  <div class="slide-title-sm">🚪 PCC（Point of Common Coupling）</div>
+  <div class="life-box box">
+    <div class="box-label">🚪 生活比喻：社區大門電錶</div>
+    <div class="box-text">
+      整個校園微電網和台電之間，只有一個正式的接線點，就是 PCC。<br><br>
+      <strong style="color:#aff5b4">門開</strong>（PCC 閉合）= 並網模式，台電供頻率參考，自由交換電力<br>
+      <strong style="color:#aff5b4">門關</strong>（PCC 斷開）= 孤島模式，校園靠自己撐<br><br>
+      門的開關 = 防孤島保護繼電器（Anti-Islanding Relay）
+    </div>
+  </div>
+  <div class="state-grid">
+    <div class="state-card" style="background:var(--green-bg);border-color:var(--green-border)">
+      <div style="font-size:20px;text-align:center;margin-bottom:8px">🟢</div>
+      <div style="font-size:14px;font-weight:700;color:var(--green);text-align:center;margin-bottom:8px">PCC 閉合（並網）</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8">
+        台電 → 提供 60Hz 頻率參考<br>
+        逆變器 → Grid-Following 模式<br>
+        雙向電力交換 → 可售電、可買電
+      </div>
+    </div>
+    <div class="state-card" style="background:var(--red-bg);border-color:var(--red-border)">
+      <div style="font-size:20px;text-align:center;margin-bottom:8px">🔴</div>
+      <div style="font-size:14px;font-weight:700;color:var(--red);text-align:center;margin-bottom:8px">PCC 斷開（孤島）</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8">
+        台電訊號消失<br>
+        BESS 切換 → Grid-Forming（VSG）<br>
+        自建頻率，校園自給自足
+      </div>
+    </div>
+  </div>
+  <div class="info-box box">
+    <div class="box-label">PCC 相關的電力指標</div>
+    <div class="box-text">在 PCC 量測：有效功率（kW）、無效功率（kVAR）、功率因數（PF）、電壓諧波（THD）→ 這些是校園 EMS 管理的核心數據。</div>
+  </div>
+</div>
+
+<!-- S8 全系統串聯 -->
+<div class="slide" id="s8">
+  <div class="slide-title-sm">🔗 三個名詞，串在一起</div>
+  <div class="code-wrap">
+    <div class="code-header">
+      <span>全系統運作邏輯</span>
+      <span style="color:var(--green)">microgrid_scenario.py</span>
+    </div>
+    <div class="code-body"><span style="color:var(--text3)"># 平常（並網）</span>
+台電 → <span style="color:var(--green)">PCC（門開）</span> → 校園微電網
+離峰便宜（1.96 元）→ BESS 充電   <span style="color:var(--text3)"># Grid-Following</span>
+太陽能多餘 → 存進 BESS
+
+<span style="color:var(--text3)"># 停電（孤島）</span>
+台電斷 → <span style="color:var(--red)">PCC（門關）</span> → 校園孤立
+XGBoost 偵測孤島 → 通知 BESS
+BESS 啟動 <span style="color:var(--purple)">VSG 模式</span> → 自建 60Hz → 繼續有電
+
+<span style="color:var(--text3)"># V2G（未來）</span>
+EV 停好車 → 接上充電樁
+半夜 <span style="color:var(--green)">1.96 元</span> 充電
+下午 <span style="color:var(--yellow)">4.78 元</span> 放回電網 → 差價 <span style="color:var(--orange)">2.60 元/kWh</span> → 車主賺錢</div>
+  </div>
+  <div style="font-size:13px;color:var(--text3);margin-top:-0.3rem">明志三系統各負責一層：</div>
+  <div class="grid-3" style="gap:10px">
+    <div class="state-card" style="background:var(--blue-bg);border-color:var(--blue-border);padding:0.8rem">
+      <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:4px">Lab 126 EMS</div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.7">物理層<br>SOC / C-Rate / RTE<br>「這顆電池能做什麼？」</div>
+    </div>
+    <div class="state-card" style="background:var(--purple-bg);border-color:var(--purple-border);padding:0.8rem">
+      <div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:4px">PV 維運平台</div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.7">系統層<br>VSG / 孤島偵測 / 頻率<br>「這個系統行不行？」</div>
+    </div>
+    <div class="state-card" style="background:var(--yellow-bg);border-color:var(--yellow-border);padding:0.8rem">
+      <div style="font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:4px">校園 EMS</div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.7">經濟層<br>TOU 電費 / 契約容量<br>「值不值得做？」</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .main -->
+
+<div class="footer">
+  <button class="btn btn-prev" id="prev" onclick="go(-1)" disabled>← 上一頁</button>
+  <button class="btn btn-next" id="next" onclick="go(1)">下一頁 →</button>
+</div>
+
+<script>
+const total = 8;
+let cur = 1;
+
+function render(){
+  document.querySelectorAll('.slide').forEach(s=>{
+    s.classList.remove('active','exit-left');
+  });
+  document.getElementById('s'+cur).classList.add('active');
+  document.getElementById('pfill').style.width=(cur/total*100)+'%';
+  document.getElementById('pnum').textContent=cur+' / '+total;
+  document.getElementById('prev').disabled=cur===1;
+  document.getElementById('next').disabled=cur===total;
+  const dc=document.getElementById('dots');
+  dc.innerHTML='';
+  for(let i=1;i<=total;i++){
+    const d=document.createElement('div');
+    d.className='dot'+(i===cur?' active':i<cur?' done':'');
+    dc.appendChild(d);
+  }
+}
+
+function go(dir){
+  const prev=document.getElementById('s'+cur);
+  prev.classList.remove('active');
+  if(dir<0) prev.style.transform='translateX(40px)';
+  else prev.classList.add('exit-left');
+  setTimeout(()=>{prev.style.transform='';prev.classList.remove('exit-left')},350);
+  cur+=dir;
+  render();
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ') { if(cur<total) go(1); }
+  if(e.key==='ArrowLeft') { if(cur>1) go(-1); }
+});
+
+render();
+</script>
+</body>
+</html>
