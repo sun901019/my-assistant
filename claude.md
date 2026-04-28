@@ -65,16 +65,15 @@ plist 位置：`~/Library/LaunchAgents/`
 
 ## 簡報工作流
 
-> ⚠️ 本專案 **絕對不使用** `html-ppt` skill、`slide-generator` skill，也不走全域的簡報路由。一律依照下方規則。
+### 三種簡報類型
 
-### 兩種簡報類型
+| 類型 | 觸發詞 | 格式 | 位置 | 設計系統 |
+|------|--------|------|------|---------|
+| **A. JSON 簡報**（Vue 渲染） | 「做成簡報」「概念教學」「快速做一個」 | JSON | `src/data/slides/{slug}.json` | Vue 元件 |
+| **B. 互動式簡報** | **明確說「互動式簡報」**、「有程式碼步驟」「設定教學」「有 quiz」「有表單」 | 靜態 HTML | `public/slides/{slug}.html` | 深色 GitHub 風（git-github.html） |
+| **C. 一般簡報** | **明確說「一般簡報」**、「簡報」、「slide」、演講/分享用途 | 靜態 HTML | `public/slides/{slug}.html` | html-ppt skill（暖色 Instrument Serif/Geist） |
 
-| 類型 | 觸發條件 | 格式 | 位置 |
-|------|---------|------|------|
-| **A. JSON 簡報**（Vue 渲染） | 「做成簡報」「概念教學」「快速做一個」 | JSON | `src/data/slides/{slug}.json` |
-| **B. 互動 HTML 簡報** | 「互動式」「有程式碼步驟」「設定教學」「有 quiz」「有 presenter mode」 | 靜態 HTML | `public/slides/{slug}.html` |
-
-**不確定時**：問使用者「要 JSON 簡報還是互動 HTML 版？」，只問這一個問題。
+**不確定時**：問使用者「互動式還是一般簡報？」，只問這一個問題。
 
 ---
 
@@ -105,6 +104,22 @@ Design system 一律參照 `slide-presenter/public/slides/git-github.html`：
 4. git add → commit → push
 
 > 超過 50 行的 HTML 內容撰寫 → delegate 給 Codex，附上 git-github.html 路徑作為 design reference
+
+---
+
+### Type C：一般簡報流程（html-ppt skill）
+
+啟動 `Skill("html-ppt")`，依 skill 規範製作：
+- 字型：Instrument Serif + Geist + Geist Mono
+- 色系：暖色 paper 風格，使用 skill 的 CSS token 系統
+- 支援 S 鍵 presenter mode、逐字稿、T 鍵切換主題
+
+步驟：
+1. 呼叫 `Skill("html-ppt")` 並確認主題、頁數、受眾
+2. 產出自帶 runtime.js 的獨立 HTML 檔
+3. 存到 `public/slides/{slug}.html`
+4. 在 `courses.ts` 新增 entry（`type: 'html'`）
+5. git add → commit → push
 
 ---
 
